@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html>
+
+	<head>
+		<meta charset="utf-8">
+		<meta name="viewport" content="width=device-width,initial-scale=1,minimum-scale=1,maximum-scale=1,user-scalable=no" />
+		<title></title>
+		<link href="../css/mui.min.css" rel="stylesheet" />
+		<link href="../css/myapp.css" rel="stylesheet" />
+		<link href="../css/mui.indexed-list.css" rel="stylesheet" />
+	</head>
+
+	<body>
+		<header class="mui-bar mui-bar-nav">
+			<a class="mui-action-back mui-icon mui-icon-left-nav mui-pull-left"></a>
+			<h1 class="mui-title">选择联系人</h1>
+			<a id='done' class="mui-btn mui-btn-link mui-pull-right" style="color: white;">下一步</a>
+		</header>
+		<div class="mui-content">
+			<div id='list' class="mui-indexed-list">
+				<div class="mui-indexed-list-search mui-input-row mui-search">
+					<input type="search" class="mui-input-clear mui-indexed-list-search-input" placeholder="搜索人">
+				</div>
+				<div class="mui-indexed-list-alert"></div>
+				<div class="mui-indexed-list-inner">
+					<ul id="ulID" class="mui-table-view">
+						<!--<li class="mui-table-view-cell  mui-checkbox mui-left">
+								<img class="mui-media-object mui-pull-left" src="../images/ui.png">
+							<input type="checkbox" value="13383553391"/>阿克苏
+						</li>-->
+					</ul>
+				</div>
+			</div>
+		</div>
+		<script src="../js/mui.min.js"></script>
+		<script src="../js/mui.indexedlist.js"></script>
+		<script src="../js/websqlwrapper.js"></script>
+		<script src="../js/constant.js"></script>
+		<script src="../js/acrosswebview.js"></script>
+		<script>
+			var dataBase = openDatabase("hcrchatDB", "1", "database for local caching", 20 * 1042 * 1024, function() {});
+			var groupMemberList = new Array();
+			var shade;
+			mui.plusReady(function() {
+				var self = plus.webview.currentWebview();
+				if(self.type == 6) {
+					dataBase.transaction(function(fx) {
+						fx.executeSql(
+							"select * from tab_address_book where user_id=? and del_status=?", [oneself, 0],
+							function(fx, result) {
+								for(var index = 0; index < result.rows.length; index++) {
+									var li = document.createElement("li");
+									var ul = document.getElementById("ulID");
+									var str = "";
+									str += "<li class='mui-table-view-cell  mui-checkbox mui-left'><img class='mui-media-object mui-pull-left' src='" + result.rows.item(index)["friend_img"] + "'>";
+									str += "<input type='checkbox' value=" + result.rows.item(index)["friend_id"] + ">" + result.rows.item(index)["friend_nickname"];
+									li.innerHTML = str;
+									ul.appendChild(li);
+								}
+							}
+						)
+					});
+
+					document.getElementById('done').addEventListener('tap', function() {
+						var checkboxArray = [].slice.call(list.querySelectorAll('input[type="checkbox"]'));
+						var checkedValues = [];
+						var checkedAcc = [];
+						checkboxArray.forEach(function(box) {
+							if(box.checked) {
+								checkedValues.push(box.parentNode.innerText);
+								checkedAcc.push(box.value);
+							}
+						});
+						if(checkedAcc.length > 0) {
+							mui.openWindow({
+								url: "/groupOper/group-infomaction.html",
+								id: "group-infomaction.html",
+								extras: {
+									"checkedAcc": checkedAcc,
+									"type": self.type
+								},
+								createNew: true
+							})
+						} else {
+							mui.toast('请选择群成员');
+						}
+					}, false);
+				} else {
+					dataBase.transaction(function(fx) {
+						fx.executeSql("select * from tab_group_member where id=?", [oneself + "" + self.groupid],
+							function(fx, result) {
+								for(var i = 0; i < result.rows.length; i++) {
+									groupMemberList.push(result.rows.item(i)["user_id"]);
+								}
+							},
+							function(fx, result) {})
+						fx.executeSql(
+							"select * from tab_address_book where user_id=?", [oneself],
+							function(fx, result) {
+								for(var index = 0; index < result.rows.length; index++) {
+									var li = document.createElement("li");
+									var ul = document.getElementById("ulID");
+									var str = "";
+									str += "<li class='mui-table-view-cell  mui-checkbox mui-left'><img class='mui-media-object mui-pull-left' src='" + result.rows.item(index)["friend_img"] + "'>";
+									str += "<input type='checkbox' value=" + result.rows.item(index)["friend_id"] + ">" +
+										result.rows.item(index)["friend_nickname"];
+									li.innerHTML = str;
+									ul.appendChild(li);
+									for(var i = 0; i < groupMemberList.length; i++) {
+										if(groupMemberList[i] == result.rows.item(index)["friend_id"]) {
+											var str = "";
+											str += "<li class='mui-table-view-cell  mui-checkbox mui-left'><img class='mui-media-object mui-pull-left' src='" + result.rows.item(index)["friend_img"] + "'>";
+											str += "<input type='checkbox' checked='checked' disabled='disabled' value=" +
+												result.rows.item(index)["friend_id"] + ">" + result.rows.item(index)["friend_nickname"];
+											li.innerHTML = str;
+											ul.appendChild(li);
+										}
+									}
+
+								}
+							}
+						)
+
+					});
+
+					document.getElementById('done').addEventListener('tap', function() {
+						shade = plus.nativeUI.showWaiting("加载中...");
+						var checkboxArray = [].slice.call(list.querySelectorAll('input[type="checkbox"]'));
+						var checkedValues = [];
+						var checkedAcc = [];
+						checkboxArray.forEach(function(box) {
+							if(box.checked && !box.disabled) {
+								checkedValues.push(box.parentNode.innerText);
+								checkedAcc.push(box.value);
+							}
+						});
+						if(checkedAcc.length > 0) {
+							var sub = plus.webview.getWebviewById('tab-webview-subpage-chat.html');
+							var data = {
+								grouphead: "",
+								groupname: self.groupname,
+								groupremark: "",
+								groupid: self.groupid,
+								usernick: localStorage.getItem("nickName"),
+								user: oneself,
+								to: checkedAcc,
+								type: self.type
+							};
+							VG.method(sub, "socketSendInterface", {
+								sendName: 'addGroupFriends',
+								data: data
+							}, function(e) {
+								if(e == 0) { //0 超時，1，成功2，失敗
+									shade.close();
+									mui.toast("连接超时");
+								} else if(e == 1) {
+									mui.toast("群邀请信息发送成功");
+									setTimeout(function() {
+										var ww = plus.webview.getWebviewById('tab-webview-main.html');
+										mui.fire(ww, 'updatechatlist');
+										plus.webview.show(ww);
+									}, 1000);
+									shade.close();
+								} else {
+									mui.toast("网络异常");
+									shade.close();
+								}
+							});
+							window.addEventListener('addGroupFriends', function(event) {
+								var data = event.detail.data;
+								var type = data.type;
+								if(type == 7) {
+									setTimeout(function() {
+										var ww = plus.webview.getWebviewById('tab-webview-main.html');
+										mui.fire(ww, 'updatechatlist');
+										plus.webview.show(ww);
+									}, 1000);
+								}
+							})
+						} else {
+							mui.toast('请选择群成员');
+						}
+					}, false);
+				}
+
+			})
+		</script>
+	</body>
+
+</html>

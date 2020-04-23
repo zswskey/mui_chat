@@ -1,0 +1,388 @@
+<!DOCTYPE html>
+<html>
+
+	<head>
+		<meta charset="utf-8">
+		<title>Hello MUI</title>
+		<meta name="viewport" content="width=device-width, initial-scale=1,maximum-scale=1,user-scalable=no">
+		<meta name="apple-mobile-web-app-capable" content="yes">
+		<meta name="apple-mobile-web-app-status-bar-style" content="black">
+		<link rel="stylesheet" href="../css/mui.min.css">
+		<style>
+			html,
+			body {
+				background-color: #efeff4;
+			}
+			.time-li{position: relative;}
+			.time-li .time-li-span{font-size: 14px;color: #8f8f94;position: absolute;right: 15px;}
+			.tx-point-div{position: relative;float: left;}
+			.tx-point-div .mui-badge{position: absolute;right:4px;top:-5px;background: red;color: #fff;}
+			.mui-icon .remind-span{width: 8px;height: 8px;padding: 0;}
+			
+		/*===标题栏添加===*/
+		.mui-bar-nav .mui-icon-plusempty{color: #fff;font-size: 34px;padding-top: 5px;}
+		.mui-plus header.mui-bar {
+						display: none!important;
+					}
+					.mui-plus .mui-bar-nav~.mui-content {
+						padding: 0!important;
+					}
+					
+					.mui-plus .plus{
+						display: inline;
+					}
+					
+					.plus{
+						display: none;
+					}
+					
+					#topPopover {
+						position: fixed;
+						top: 16px;
+						right: 6px;
+					}
+					#topPopover .mui-popover-arrow {
+						left: auto;
+						right: 6px;
+					}
+					.mui-popover {
+						height: auto;
+					}
+					.mui-popover .mui-scroll-wrapper-v {
+						height: 106px;
+						margin: 0px;
+					}
+					.mui-content {
+						padding: 10px;
+					}
+					
+		.mui-popover{width:180px;}
+		.add-icon{font-size: 17px;}
+		.mui-icon-personadd:before{font-size: 28px;margin-left: -5px;margin-right: 10px;color: #fca454;}
+		/*===建群icon===*/
+		@font-face {font-family: "iconfont"; 
+		  src:url('../fonts/iconfont.ttf') format('truetype')
+		}
+		.iconfont {
+		  font-family:"iconfont" !important;
+		  font-style:normal;
+		  -webkit-font-smoothing: antialiased;
+		  -moz-osx-font-smoothing: grayscale;
+		}
+		.icon-jiaqun:before { content: "\e600";font-size: 22px;margin-right: 10px;color: #93bd3c;}
+		#pullrefresh{
+			text-align: center;
+			width: 100%;
+			height: 50px;
+			line-height:50px;
+			font-weight: 700;
+			color: #777;
+		}
+		</style>
+	</head>
+
+	<body>
+		<header class="mui-bar mui-bar-nav">
+			<a class="mui-action-back mui-icon mui-icon-left-nav mui-pull-left"></a>
+			<a id="menu" class="mui-action-menu mui-icon mui-icon-plusempty mui-pull-right" style="color: #fff;" href="#topPopover"></a>
+			<h1 id="title" class="mui-title">产品名称</h1>
+		</header>
+		<div class="mui-content">
+			<div id="pullrefresh">
+				<div class="mui-pull-loading mui-icon mui-spinner"></div>
+				<div class="mui-pull-caption">正在刷新...</div>
+			</div>
+			<ul id="list" class="mui-table-view mui-table-view-chevron">
+			</ul>
+		</div>
+		
+		<!--右上角弹出菜单开始-->
+		<div id="topPopover" class="mui-popover">
+			<div class="mui-popover-arrow"></div>
+			<div class="mui-scroll-wrapper mui-scroll-wrapper-v">
+				<div class="mui-scroll">
+					<ul class="mui-table-view">
+						<li id="addFriendID" class="mui-table-view-cell"><a class="add-icon mui-icon mui-icon-personadd" href="#">新加好友</a></li>
+						<li id="createGroupID"  class="mui-table-view-cell"><a class="add-icon iconfont icon-jiaqun" href="#">创建群组</a></li>
+					</ul>
+				</div>
+			</div>
+		</div>
+		<script src="../js/mui.min.js"></script>
+		<script src="../js/acrosswebview.js"></script>
+		<script src="../js/socket.io-1.4.5.js" ></script>
+		<script src="../js/websqlwrapper.js"></script>
+		<script src="../js/constant.js"></script>
+		<script src="../js/updatedb.js"></script>
+		<script src="../js/socket-connect.js"></script>
+		<script src="../js/exif.js"></script>
+		<script src="../js/chat.js"></script>
+		<script src="../js/Base64ConversionUtil.js"></script>
+		<script>
+			mui('.mui-scroll-wrapper').scroll();
+			mui('body').on('shown', '.mui-popover', function(e) {
+				//console.log('shown', e.detail.id);//detail为当前popover元素
+			});
+			mui('body').on('hidden', '.mui-popover', function(e) {
+				//console.log('hidden', e.detail.id);//detail为当前popover元素
+			});
+			//运行环境从后台切换到前台事件
+			document.addEventListener("resume",function(){
+				var elen = document.getElementById("pullrefresh");
+				elen.classList.remove('mui-hidden');
+				var self = plus.webview.currentWebview();
+				mui.fire(self,'socketRefresh');
+				pulldownRefresh();
+			}, false);
+			
+			//socket消息发送接口方法,callback 参数 0：超时，1：成功，2：失败
+			function socketSendInterface(param,callback){
+				var myTimeOut = setTimeout(function(){
+					callback(0);
+				},8000);
+				var sendName = param.sendName,data = param.data;
+				if(!that.socket.id){//socket断开状态重连
+					that.socket.connect();
+				}
+	            that.socket.emit(sendName,data,function(entry){
+	            	clearTimeout(myTimeOut);
+				    callback(entry?1:2);
+				});
+            };
+            
+			//socket发送消息事件
+			function socketToSendMessage(sendName,data,this_chat,id,sessionid){
+				that.socket.emit(sendName,data,function(entry){
+					var chatPage=plus.webview.getWebviewById(sessionid);
+					mui.fire(chatPage,'updateSendIcon',{id:id,state:2});
+				    if(entry){//send_state发送状态：1成功，0失败，默认0
+			       	 	setTimeout(function(){
+			       	 		this_chat.update({id:id,send_state:1}, 'id');
+			       	 	},0);
+						mui.fire(chatPage,'updateSendIcon',{id:id,state:1});
+				    }else{
+				       	mui.fire(chatPage,'updateSendIcon',{id:id,state:0});//发送内容格式错误
+				       	var content = data.contenttype==1?'图片解析发送失败，请稍后在试！':data.contenttype==2?'文本内容格式错误！':'语音发送失败！';
+				       	mui.toast(content);
+				    }
+				});
+			};
+			
+			 //事件监听,发送聊天消息 type 1:单聊 2:群聊 contenttype 1:图片img 2:消息msg 3：语音
+			document.addEventListener('sendChatMessage', function(event) {
+				var id = event.detail.id,
+				sessionid = event.detail.sessionid,
+				data = event.detail.data,sendName,this_chat;
+				if(data.type==1){
+					sendName = 'privateChat';
+					this_chat = tab_chat;
+				}else{
+					sendName = 'groupChat';
+					this_chat = tab_chat_group;
+				}
+				if(!that.socket.id){
+					that.socket.connect();
+				}
+				if(1==data.contenttype){//处理图片
+					var path = data.msg;
+					if(mui.os.ios){
+						ImagedataURL(id,path,0,function(newPath){
+							setTimeout(function () {
+								Base64ConversionUtil.startFileToData(newPath,function(base64Str){
+								 	data.msg = base64Str;
+								 	socketToSendMessage(sendName,data,this_chat,id,sessionid);
+								 	setTimeout(function(){
+								 		//删除临时文件
+								 		delFile(newPath);
+								 	},20);
+								});
+							},80);
+						});
+					}else{
+						setTimeout(function () {
+							Base64ConversionUtil.startFileToData(path,function(base64Str){
+							 	data.msg = base64Str;
+							 	socketToSendMessage(sendName,data,this_chat,id,sessionid);
+							});
+						},80);
+					}
+				}else if(3==data.contenttype){//语音发送
+					var path = data.msg;
+					setTimeout(function () {
+							Base64ConversionUtil.startFileToData(path,function(base64Str){
+							 	data.msg = base64Str;
+							 	socketToSendMessage(sendName,data,this_chat,id,sessionid);
+							});
+					},80);
+				}else{//文本发送
+					socketToSendMessage(sendName,data,this_chat,id,sessionid);
+				}
+			});
+			
+			 function updateChatNumber(id){
+			 	if(id){
+			 		var chatNumber = localStorage.getItem("chatNumber")?parseInt(localStorage.getItem("chatNumber")):0;
+					var nowChatNum = localStorage.getItem(id)?parseInt(localStorage.getItem(id)):0;
+					var newchatNumber =  chatNumber-nowChatNum;
+					localStorage.setItem("chatNumber",newchatNumber);
+			 	}
+			 	var main = plus.webview.currentWebview().parent();
+			 	if(main){
+			 		main.evalJS("updateChatNumber();");
+			 	}
+			 };
+			
+			//遍历加载页面列表数据
+	      	var createFragment = function(count) {
+				var fragment = document.createDocumentFragment();
+				var li;
+				var chatNumber = 0;
+				for (var i = 0,len = count.length; i < len; i++) {
+					var type = count[i].type, 
+					groupname = count[i].group_name, 
+					friendremark = count[i].friend_remark,
+					userid=count[i].others_id,
+					sessionid = count[i].session_id, username, href,friendimg,
+					id = count[i].id,
+					createtime = new Date(id).toTimeString().substr(0, 5),
+					receivenum = parseInt(localStorage.getItem(sessionid)),
+					message = null!=count[i].message?count[i].message:'',
+					messagetype = count[i].message_type,
+					messagecount = 1==messagetype?'[图片]': 2==messagetype?message:'[语音]',
+					badgehtml = receivenum&&receivenum>0?'<span class="mui-badge">'+receivenum+'</span>':'';
+					chatNumber += receivenum&&receivenum>0?receivenum : 0;
+					if(1==type){
+						username = groupname;
+					    href ='im-chat-group.html';
+					    friendimg = '../images/group-head.jpg';
+					}else{
+						username = friendremark;
+					    href = 'im-chat.html';
+					    friendimg =  count[i].friend_img;
+					}
+					
+					li = document.createElement('li');
+					li.className = 'mui-table-view-cell mui-media time-li';
+					li.innerHTML = '<div class="mui-slider-right mui-disabled"><a sessionid="'+sessionid+'" type="'+type+'" class="mui-btn mui-btn-red mui-icon mui-icon-trash"></a></div>'
+					+ '<a href="'+href+'" sessionid="'+sessionid+'"  userid="'+userid+'" username="'+username+'" class="mui-slider-handle"><span class="time-li-span">'+createtime+'</span><div class="tx-point-div">'+badgehtml
+					+'<img class="mui-media-object mui-pull-left" src="'+friendimg+'" ></div><div class="mui-media-body"><div class="mui-ellipsis">'+username+'</div><p class="mui-ellipsis">'+messagecount+'</p></div></a>';
+					fragment.appendChild(li);
+				}
+				localStorage.setItem("chatNumber",chatNumber);
+				setTimeout(function(){
+					updateChatNumber();
+				},200);
+				return fragment;
+			};
+			
+			 function pulldownRefresh() {
+				var chat_sql = 'SELECT t.id,t.send_id,t.receive_id,t.message,t.message_type,t.session_id,t.send_state, 1 type FROM tab_chat_group t WHERE NOT EXISTS(SELECT 1 FROM tab_chat_group WHERE t.session_id=session_id  AND id>t.id) UNION  SELECT t.id,t.send_id,t.receive_id,t.message,t.message_type,t.session_id,t.send_state,2 type FROM tab_chat t WHERE NOT EXISTS(SELECT 1 FROM tab_chat WHERE t.session_id=session_id  AND id>t.id)';
+				var sql = 'SELECT tg.group_name,tab.friend_remark,tab.friend_img,chat.type,chat.session_id, SUBSTR(chat.session_id,12) others_id, chat.id,chat.send_id,chat.message,chat.message_type,chat.send_state FROM ( '+ chat_sql+' ) chat  LEFT JOIN tab_group tg ON tg.group_id = SUBSTR(chat.session_id,12)  AND chat.type = 1 LEFT JOIN tab_address_book tab ON tab.id = chat.session_id AND chat.type = 2 WHERE SUBSTR(chat.session_id,1,11) = "'+oneself+'" ORDER BY chat.id desc';
+				db.query(sql, function(r){
+					var elen = document.getElementById("pullrefresh");
+					elen.classList.remove('mui-hidden');
+					var list = document.getElementById("list");
+					list.innerHTML = '';
+					if(r&&r.length>0){
+						setTimeout(function() {
+							list.appendChild(createFragment(r));
+						}, 10);
+					}
+					elen.classList.add('mui-hidden');
+        	    });
+			};
+			
+			//检测更新本地数据库是否完成
+			function updateOffline(){
+				new EndAjax(4,function (){//计数4为ajax请求个数
+					setTimeout(function(){
+						pulldownRefresh();
+						var reqCount='txl'+localStorage.getItem("phoneNumber");
+			   			var reqCount=localStorage.getItem(reqCount)?parseInt(localStorage.getItem(reqCount)):0;
+			   			var mainPage = plus.webview.getWebviewById('tab-webview-main.html');
+						var contactPage = plus.webview.getWebviewById('tab-webview-subpage-contact.html');
+						mainPage.evalJS("updateContactNumber();");
+						contactPage.evalJS("updateDatabase();");
+					},1500);
+				}).check();
+			};
+			updateOffline();
+			var aniShow = "pop-in";
+			if (mui.os.android) {
+				//Android平台暂时使用slide-in-right动画
+				if(parseFloat(mui.os.version)<4.4){
+					aniShow = "slide-in-right";
+				}
+			}
+			//主列表点击事件
+			mui('#list').on('tap', 'a', function() {
+				var id = this.getAttribute('href'),
+				href = this.href,
+				username = this.getAttribute('username'),
+				userid = this.getAttribute('userid'),
+				sessionid = this.getAttribute('sessionid'),
+				elem = this,elemParent = elem.parentNode,
+				type = this.getAttribute('type'); 
+				if(id && ~id.indexOf('.html')&&elemParent.classList.contains('mui-selected')){
+					mui.swipeoutClose(elemParent);
+					return;
+				}
+				//清空数字角标
+				if(href){
+					var span = elem.firstChild.nextSibling.firstChild;
+					if(span.classList.contains('mui-badge')){
+						updateChatNumber(sessionid);
+						localStorage.removeItem(sessionid);
+						span.parentNode.removeChild(span);
+					}
+				}
+				
+			    if (id && ~id.indexOf('.html')) {
+						mui.openWindow({
+							id: sessionid,
+							url:this.href,
+							styles: {
+								popGesture: 'close'
+							},
+							show: {
+								aniShow: aniShow
+							},
+							 extras:{
+      							title:username,
+      							userid:userid
+    					    },
+							waiting: {
+								autoShow: false
+							}
+						});
+				}else{//删除本地聊天缓存及列表内容
+					var table = 1==type?tab_chat_group:tab_chat;
+					table.del('session_id==="'+sessionid+'"', function(r){
+				    	var li = elem.parentNode.parentNode;
+				    	li.parentNode.removeChild(li);
+				    	updateChatNumber(sessionid);
+				    	localStorage.removeItem(sessionid);
+				    });
+				}
+			});
+			
+			document.getElementById('addFriendID').addEventListener('tap', function() {
+				mui.openWindow({
+					url: "../friendOper/add-friend-search.html",
+					id:"add-friend-search.html",
+					createNew: false //是否重复创建同样id的webview，默认为false:不重复创建，直接显示
+				})
+			});
+			document.getElementById("createGroupID").addEventListener('tap', function() {
+				mui.openWindow({
+					url: "../groupOper/createGroup.html",
+					id:"createGroup.html",
+					extras: {
+						"type": 6//6代表创建群聊
+					},
+					createNew: false
+				});
+			});
+		</script>
+	</body>
+</html>

@@ -1,0 +1,404 @@
+<!DOCTYPE html>
+<html>
+
+	<head>
+		<meta charset="utf-8">
+		<title>Hello MUI</title>
+		<meta name="viewport" content="width=device-width, initial-scale=1,maximum-scale=1,user-scalable=no">
+		<meta name="apple-mobile-web-app-capable" content="yes">
+		<meta name="apple-mobile-web-app-status-bar-style" content="black">
+
+		<link rel="stylesheet" href="../css/mui.min.css">
+		<link rel="stylesheet" href="../css/myapp.css">
+		<style>
+			html,
+			body {
+				background-color: #efeff4;
+			}
+			
+			.title {
+				margin: 20px 15px 10px;
+				color: #6d6d72;
+				font-size: 15px;
+			}
+			/*===标题栏添加===*/
+			
+			.mui-bar-nav .mui-icon-plusempty {
+				color: #fff;
+				font-size: 34px;
+				padding-top: 5px;
+			}
+			
+			.mui-plus .plus {
+				display: inline;
+			}
+			
+			.plus {
+				display: none;
+			}
+			
+			#topPopover {
+				position: fixed;
+				top: 16px;
+				right: 6px;
+			}
+			
+			#topPopover .mui-popover-arrow {
+				left: auto;
+				right: 6px;
+			}
+			
+			.mui-popover .mui-scroll-wrapper-v {
+				height: 106px;
+				margin: 0px;
+			}
+			
+			.mui-content {
+				padding: 10px;
+			}
+			
+			.mui-popover {
+				width: 180px;
+			}
+			
+			.add-icon {
+				font-size: 17px;
+			}
+			
+			.mui-icon-personadd:before {
+				font-size: 28px;
+				margin-left: -5px;
+				margin-right: 10px;
+				color: #fca454;
+			}
+			/*===建群icon===*/
+			
+			@font-face {
+				font-family: "iconfont";
+				src: url('../fonts/iconfont.ttf') format('truetype')
+			}
+			
+			.iconfont {
+				font-family: "iconfont" !important;
+				font-style: normal;
+				-webkit-font-smoothing: antialiased;
+				-moz-osx-font-smoothing: grayscale;
+			}
+			
+			.icon-jiaqun:before {
+				content: "\e600";
+				font-size: 22px;
+				margin-right: 10px;
+				color: #93bd3c;
+			}
+			
+			#list {
+				/*避免导航边框和列表背景边框重叠*/
+				margin-top: 0px;
+			}
+		</style>
+	</head>
+
+	<body>
+		<div class="mui-content">
+			<ul class="mui-table-view mui-table-view-chevron" style="margin-top: 0px;">
+				<li id="updateHeadID" class="mui-table-view-cell">
+					<img id="headImg" class="mui-media-object mui-pull-left" width="100px">
+					<div class="mui-media-body">
+						<div id="nickNameIDs" class="mui-ellipsis center-name"></div>
+					</div>
+				</li>
+			</ul>
+			<ul class="mui-table-view" style="margin-top: 15px;">
+				<li id="myNikeName" class="mui-table-view-cell">
+					<a>昵称<span id="myNameID" class="mui-pull-right"></span></a>
+				</li>
+				<li class="mui-table-view-cell">
+					<a>账号<span id="accountID" class="mui-pull-right"></span></a>
+				</li>
+			</ul>
+			<ul id="loginOutID" class="mui-table-view" style="margin-top: 25px;">
+				<li class="mui-table-view-cell">
+					<a style="text-align: center;color: #FF3B30;">
+						退出登录
+					</a>
+				</li>
+			</ul>
+		</div>
+		<!--右上角弹出菜单开始-->
+		<div id="topPopover" class="mui-popover">
+			<div class="mui-popover-arrow"></div>
+			<div class="mui-scroll-wrapper mui-scroll-wrapper-v">
+				<div class="mui-scroll">
+					<ul class="mui-table-view">
+						<li id="addFriendID" class="mui-table-view-cell">
+							<a class="add-icon mui-icon mui-icon-personadd" href="#">新加好友</a>
+						</li>
+						<li id="createGroupID" class="mui-table-view-cell">
+							<a class="add-icon mui-icon iconfont icon-jiaqun" href="#">创建群组</a>
+						</li>
+					</ul>
+				</div>
+			</div>
+		</div>
+	</body>
+	<script src="../js/mui.min.js"></script>
+	<script src="../js/jquery-1.9.1.js"></script>
+	<script src="../js/websqlwrapper.js"></script>
+	<script src="../js/constant.js"></script>
+	<script>
+		window.onload = function() {
+			mui("#headImg")[0].src = localStorage.getItem("userImg");
+			mui("#nickNameIDs")[0].innerHTML = localStorage.getItem("nickName");
+			mui("#myNameID")[0].innerHTML = localStorage.getItem("nickName");
+			mui("#accountID")[0].innerHTML = localStorage.getItem("phoneNumber");
+			mui.plusReady(function() {
+				var self = plus.webview.currentWebview();
+			})
+			document.getElementById("myNikeName").addEventListener('tap', function() {
+				mui.openWindow({
+					url: '/myInfo/myNickName.html',
+					id: 'myNickName.html',
+					extras: {
+						"myNikeName": mui("#myNameID").innerHTML,
+						"phoneNumber": localStorage.getItem("phoneNumber")
+					},
+					createNew: true //不创建相同webview的页面
+				})
+			})
+
+			document.getElementById('addFriendID').addEventListener('tap', function() {
+				mui.openWindow({
+					url: "/friendOper/add-friend-search.html",
+					id: "add-friend-search.html",
+					createNew: true //是否重复创建同样id的webview，默认为false:不重复创建，直接显示
+				})
+			})
+			document.getElementById("createGroupID").addEventListener('tap', function() {
+				mui.openWindow({
+					url: "/groupOper/createGroup.html",
+					id: "createGroup.html",
+					extras: {
+						"type": 6 //6代表创建群聊
+					},
+					createNew: true
+				});
+			})
+
+			var mainImage = document.getElementById('updateHeadID');
+			mui("#updateHeadID")[0].addEventListener('tap', function() {
+				if(mui.os.plus) {
+					var a = [{
+						title: "拍照"
+					}, {
+						title: "从手机相册选择"
+					}];
+					plus.nativeUI.actionSheet({
+						title: "修改用户头像",
+						cancel: "取消",
+						buttons: a
+					}, function(b) { /*actionSheet 按钮点击事件*/
+						switch(b.index) {
+							case 0:
+								break;
+							case 1:
+								getImage(); /*拍照*/
+								break;
+							case 2:
+								galleryImg(); /*打开相册*/
+								break;
+							default:
+								break;
+						}
+					})
+				}
+			}, false);
+			//拍照
+			function getImage() {
+				var c = plus.camera.getCamera();
+				c.captureImage(function(e) {
+					plus.io.resolveLocalFileSystemURL(e, function(entry) {
+						var s = entry.toLocalURL() + "?version=" + new Date().getTime();
+						uploadHead(s); /*上传图片*/
+					}, function(e) {});
+				}, function(s) {
+
+				}, {
+					filename: "_doc/head.png"
+				})
+			}
+
+			//本地相册选择 
+			function galleryImg() {
+				plus.gallery.pick(function(a) {
+					plus.io.resolveLocalFileSystemURL(a, function(entry) {
+						var img = a;
+						plus.io.resolveLocalFileSystemURL("_doc/", function(root) {
+							root.getFile("head.png", {}, function(file) {
+								//文件已存在 
+								file.remove(function() {
+									entry.copyTo(root, 'head.png', function(e) {
+											var e = e.fullPath;
+											uploadHead(img); /*上传图片*/
+										},
+										function(e) {
+											console.log('copy image fail:' + e.message);
+										});
+								}, function() {
+									console.log("delete image fail:" + e.message);
+								});
+							}, function() {
+								//文件不存在 
+								entry.copyTo(root, 'head.png', function(e) {
+										var path = e.fullPath + "?version=" + new Date().getTime();
+										uploadHead(path); /*上传图片*/
+									},
+									function(e) {
+										console.log('copy image fail:' + e.message);
+									});
+							});
+						}, function(e) {
+							console.log("get _www folder fail");
+						})
+					}, function(e) {
+						console.log("读取拍照文件错误：" + e.message);
+					});
+				}, function(a) {}, {
+					filter: "image"
+				})
+			};
+
+			//上传头像图片 
+			function uploadHead(imgPath) {
+				if(plus.networkinfo.getCurrentType() == 0 || plus.networkinfo.getCurrentType() == 1) {
+					var w = plus.nativeUI.showWaiting("加载中...");
+					setTimeout(function() {
+						w.close();
+					}, 2000)
+					mui.toast("网络异常");
+				} else {
+					var w = plus.nativeUI.showWaiting("加载中...");
+					var main = document.getElementById("headImg");
+					//选择的图片在ios存放路径
+					main.maxWidth = "100px";
+					main.minHeight = "100px";
+					var image = new Image();
+					image.src = imgPath;
+					image.onload = function() {
+						var imgData = getBase64Image(image);
+						/*if(mui.os.ios) {
+							var oneselfHead = new Date().getTime();
+								ImagedataURL(oneselfHead, imgPath, 0, function(newPath) {
+									newP = newPath;
+									setTimeout(function() {
+										Base64ConversionUtil.startFileToData(newPath, function(base64Str) {
+											imgData = base64Str;
+											setTimeout(function() {
+												//删除临时文件
+												//delFile(newPath);
+											}, 20);
+										});
+									}, 80);
+								});
+						} else {
+							setTimeout(function() {
+								Base64ConversionUtil.startFileToData(path, function(base64Str) {
+									imgData = base64Str;
+								});
+							}, 80);
+						}*/
+						mui.ajax(Url + "/user/updateimg", {
+							data: {
+								"account": localStorage.getItem("phoneNumber"),
+								"userImg": imgData
+							},
+							dataType: 'json', //服务器返回json格式数据
+							type: 'post', //HTTP请求类型
+							timeout: 10000, //超时时间设置为10秒；
+							success: function(data) {
+								console.log(JSON.stringify(data));
+								if(data.status) {
+									w.close();
+									mui.toast("头像修改成功");
+									main.src = imgPath;
+									console.log(main.src);
+									localStorage.setItem("userImg", imgData);
+								} else {
+									w.close();
+									mui.toast("头像修改失败");
+								}
+							},
+							error: function(xhr, type, errorThrown) {
+								//异常处理；
+								w.close();
+								mui.toast("网络异常");
+							}
+						});
+					}
+				}
+
+			}
+
+			//将图片压缩转成base64 
+			function getBase64Image(img) {
+				var canvas = document.createElement("canvas");
+				var width = img.width;
+				var height = img.height;
+				// calculate the width and height, constraining the proportions 
+				if(width > height) {
+					if(width > 100) {
+						height = Math.round(height *= 100 / width);
+						width = 100;
+					}
+				} else {
+					if(height > 100) {
+						width = Math.round(width *= 100 / height);
+						height = 100;
+					}
+				}
+				canvas.width = width;
+				canvas.height = height;
+				var ctx = canvas.getContext("2d");
+				ctx.drawImage(img, 0, 0, width, height);
+				var dataURL = canvas.toDataURL("image/png", 0.8);
+				return dataURL;
+
+			}
+		}
+
+		document.getElementById("loginOutID").addEventListener('tap', function() {
+			localStorage.clear();
+			var curr = plus.webview.currentWebview(); //获取当前webview窗口
+			var main = plus.webview.getWebviewById("tab-webview-main.html");
+			var wvs = plus.webview.all(); //获取所有webview窗口
+			var launch = plus.webview.getLaunchWebview();
+			for(var i = 0, len = wvs.length; i < len; i++) {
+				if(plus.os.name == 'iOS') {
+					if(wvs[i].getURL() == curr.getURL()) {
+						plus.webview.open('/login.html'); //打开登录窗口
+						curr.close(); //关闭当前窗口
+					} else {
+						plus.webview.close(wvs[i]); //关闭前面窗口
+					}
+				} else if(plus.os.name == 'Android') {
+					if(wvs[i].getURL() == curr.getURL()) {
+						plus.webview.open('/login.html'); //打开登录窗口
+						curr.close(); //关闭当前窗口
+					} else {
+						plus.webview.close(wvs[i]); //关闭前面窗口
+					}
+					//plus.webview.open('../login.html');
+					//main.close();
+				}
+			}
+		})
+
+		//自定义事件，用来改变昵称个人昵称信息
+		document.addEventListener('updataNick', function(event) {
+			var nick = event.detail.nick;
+			$("#myNameID").html(nick);
+			$("#nickNameIDs").html(nick);
+		});
+	</script>
+
+</html>

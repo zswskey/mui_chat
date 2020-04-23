@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html>
+
+	<head>
+		<meta charset="UTF-8">
+		<meta name="viewport" content="width=device-width,initial-scale=1,minimum-scale=1,maximum-scale=1,user-scalable=no" />
+		<title></title>
+		<link href="../css/mui.min.css" rel="stylesheet" />
+		<style>
+			#pullrefresh {
+				text-align: center;
+				margin-top: -200px;
+				width: 100%;
+				height: 500px;
+				line-height: 50px;
+				font-weight: 100;
+				color: #000000;
+			}
+		</style>
+	</head>
+
+	<body>
+		<!--标题栏开始-->
+		<header id="header" class="mui-bar mui-bar-nav">
+			<a class="mui-action-back mui-icon mui-icon-left-nav mui-pull-left"></a>
+			<h1 class="mui-title">查找好友</h1>
+		</header>
+		<!--标题栏结束-->
+		<div id="pullrefresh" style="display: none;">
+			<div class="mui-pull-loading mui-icon mui-spinner"></div>
+		</div>
+		<!--搜索框开始-->
+		<div style="margin-top: 54px;padding: 0 15px;">
+			<div class="mui-input-row mui-search" style="width:80%;float: left;">
+				<input id="accValue" type="search" placeholder="请输入要查询的账号" data-input-clear="1" style="background-color: #fff;text-align: left;" maxlength="11" onKeypress="if (event.keyCode < 45 || event.keyCode > 57) event.returnValue = false;">
+				<span class="mui-placeholder" style="text-align: left;left:6px;"><span class="mui-icon mui-icon-search"></span></span>
+			</div>
+			<button id="addFriendID" type="button" class="mui-btn mui-btn-primary" style="background-color:#0B8DCB;float: right;width: 16%;padding:6px 0">
+					搜索
+				</button>
+		</div>
+		<!--搜索框结束-->
+		<script src="../js/mui.min.js"></script>
+		<script src="../js/websqlwrapper.js"></script>
+		<script src="../js/constant.js"></script>
+		<script>
+			document.getElementById("addFriendID").addEventListener('tap', function() {
+				if(plus.networkinfo.getCurrentType() == 0 || plus.networkinfo.getCurrentType() == 1) {
+					var w = plus.nativeUI.showWaiting("加载中...");
+					setTimeout(function() {
+						w.close();
+					}, 2000);
+					mui.toast("网络异常");
+				} else {
+					var phone = document.getElementById("accValue").value;
+					if(phone == '') {
+						mui.toast("请输入要查找的手机号，谢谢！");
+						return false;
+					}
+					if(!/^1[3|4|5|7|8]\d{9}$/.test(phone)) {
+						mui.toast("搜索的手机号不合法，请重新输入");
+						return false;
+					} else if(/^1[3|4|5|7|8]\d{9}$/.test(phone)) {
+						db.query('SELECT * from tab_address_book where user_id="' + oneself + '"', function(r) {
+							if(r && r.length > 0) {
+								if(r[0].friend_id == phone && r[0].del_status == 0) {
+									mui.openWindow({
+										url: "/friendOper/add-friend.html",
+										id: "add-friend.html",
+										extras: {
+											"friendOper": 0, //0代表操作好友消息
+											"friend_id": phone //朋友账号
+										},
+										createNew: true
+									})
+								} else {
+									var w = plus.nativeUI.showWaiting("加载中...");
+									mui.ajax(Url + "/user/findById", {
+										data: {
+											account: phone
+										},
+										dataType: 'json', //服务器返回json格式数据
+										type: 'get', //HTTP请求类型
+										timeout: 2000, //超时时间设置为10秒；
+										success: function(data) {
+											if(data.status) {
+												if(data.count != 0) {
+													if(data.data[0].account == oneself) {
+														mui.toast("您不能添加自己到通讯录");
+														setTimeout(function() {
+															w.close();
+														}, 2000)
+														return false;
+													}
+													mui.openWindow({
+														url: '/friendOper/add-friend.html',
+														id: 'add-friend.html',
+														extras: {
+															"account": data.data[0].account, //查找好友账号
+															"nickName": data.data[0].user_name, //好友昵称
+															"img": data.data[0].img, //好友头像
+															"friendOper": 1 //1代表准备添加好友
+														},
+														createNew: true
+													})
+
+													w.close();
+												} else {
+													setTimeout(function() {
+														w.close();
+													}, 2000)
+													mui.toast("系统无此账号，请重新输入");
+												}
+											}
+										},
+										error: function(xhr, type, errorThrown) {
+											//异常处理；
+
+											setTimeout(function() {
+												w.close();
+											}, 2000)
+											mui.toast("网络异常");
+										}
+									})
+								}
+							} else {
+								var w = plus.nativeUI.showWaiting("加载中...");
+								mui.ajax(Url + "/user/findById", {
+									data: {
+										account: phone
+									},
+									dataType: 'json', //服务器返回json格式数据
+									type: 'get', //HTTP请求类型
+									timeout: 2000, //超时时间设置为10秒；
+									success: function(data) {
+										if(data.status) {
+											if(data.count != 0) {
+												if(data.data[0].account == oneself) {
+													mui.toast("您不能添加自己到通讯录");
+													setTimeout(function() {
+														w.close();
+													}, 2000)
+													return false;
+												}
+												mui.openWindow({
+													url: '/friendOper/add-friend.html',
+													id: 'add-friend.html',
+													extras: {
+														"account": data.data[0].account, //查找好友账号
+														"nickName": data.data[0].user_name, //好友昵称
+														"img": data.data[0].img, //好友头像
+														"friendOper": 1 //1代表准备添加好友
+													},
+													createNew: true
+												})
+
+												w.close();
+											} else {
+												setTimeout(function() {
+													w.close();
+												}, 2000)
+												mui.toast("系统无此账号，请重新输入");
+											}
+										}
+									},
+									error: function(xhr, type, errorThrown) {
+										//异常处理；
+
+										setTimeout(function() {
+											w.close();
+										}, 2000)
+										mui.toast("网络异常");
+									}
+								})
+							}
+
+						})
+
+					}
+				}
+
+			})
+		</script>
+
+	</body>
+
+</html>

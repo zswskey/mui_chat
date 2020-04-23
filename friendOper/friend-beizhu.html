@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="UTF-8">		
+		<meta name="viewport" content="width=device-width,initial-scale=1,minimum-scale=1,maximum-scale=1,user-scalable=no" />
+	    <title></title>
+	    <link href="../css/mui.min.css" rel="stylesheet"/>
+	    <link href="../css/myapp.css" rel="stylesheet"/>
+	</head>
+	<body>
+		<!--标题栏开始-->
+		<header id="header" class="mui-bar mui-bar-nav">
+			<a class="mui-action-back mui-icon mui-icon-left-nav mui-pull-left"></a>
+			<h1 class="mui-title">好友信息</h1>
+		</header>
+		<!--标题栏结束-->
+		
+		<!--搜索框开始-->
+		<div class="mui-pages" style="margin-top: 54px; padding: 0 15px;">
+			<div id="feedback" class="mui-page feedback mui-page-center" style="">
+			
+			<div class="mui-page-content">
+				<p>备注</p>
+				<div class="mui-input-row">
+					<input id="contact" type="text" class="mui-input-clear  contact" placeholder="" data-input-clear="19"><span class="mui-icon mui-icon-clear mui-hidden"></span>
+				</div>
+				
+				<div class="b-btn">
+				<button id="saveId" type="button" class="mui-btn new-r-btn add-contact" style="width: 100%; margin: 0;">完成</button>
+				</div>
+			</div>
+		</div></div>
+		<!--搜索框结束-->
+		 <script src="../js/mui.min.js"></script>
+		<script src="../js/jquery-1.9.1.js"></script>
+		<script src="../js/websqlwrapper.js"></script>
+		<script src="../js/constant.js"></script>
+		 <script>
+		 var dataBase = openDatabase("hcrchatDB", "1", "database for local caching", 20*1042*1024, function() {});
+		 	mui.plusReady(function(){
+		 		var self=plus.webview.currentWebview();
+		 		mui("#contact")[0].value=self.title;
+		 		//修改好友备注
+		 		document.getElementById("saveId").addEventListener('tap', function() {
+				    mui.ajax(Url+"/friend/updateRemark",{
+				        data: {
+				           "remark":$("#contact").val(),
+				           "userId":self.userId,
+				           "friendId":self.friendId
+				        },
+				        dataType:'json',//服务器返回json格式数据
+				        type:'post',//HTTP请求类型
+				        timeout:10000,//超时时间设置为10秒；
+				        success:function(data){
+			        		if(data){
+			        			dataBase.transaction(function(fx) {
+			        				fx.executeSql("update tab_address_book set friend_remark=? where  friend_id=?",
+			        				[$("#contact").val(),self.friendId])
+			        			})
+			        			var wo = plus.webview.getWebviewById("tab-webview-subpage-contact.html");
+								wo.evalJS("updateDatabase();");
+								var wobj = plus.webview.getWebviewById("add-friend.html");
+								mui.fire(wobj,'updataRemark',{friendRemark:$("#contact").val()});
+								plus.webview.show(wobj);
+			        		}else{
+			        			mui.toast("修改失败");
+			        		}
+				        	
+				            //console.log(JSON.stringify(data));
+				        },
+				        error:function(xhr,type,errorThrown){
+				            //异常处理；
+				            console.log(type);
+				        }
+				    })
+		})
+		 	})
+		 	
+		 </script>
+				
+	</body>
+</html>

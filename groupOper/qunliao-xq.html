@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html>
+
+	<head>
+		<meta charset="UTF-8">
+		<meta name="viewport" content="width=device-width,initial-scale=1,minimum-scale=1,maximum-scale=1,user-scalable=no" />
+		<title></title>
+		<link href="../css/mui.min.css" rel="stylesheet" />
+		<link href="../css/myapp.css" rel="stylesheet" />
+
+	</head>
+
+	<body>
+		<!--标题栏开始-->
+		<header id="header" class="mui-bar mui-bar-nav">
+			<a class="mui-action-back mui-icon mui-icon-left-nav mui-pull-left"></a>
+			<h1 class="mui-title">群信息</h1>
+		</header>
+		<!--标题栏结束-->
+		<!--群信息开始-->
+		<div style="margin-top: 64px;">
+			<ul id="ulID" class="mui-table-view mui-grid-view mui-grid-9 qunliao-ul">
+				<li id="liid" class="mui-table-view-cell mui-media mui-col-xs-4 mui-col-sm-3 ql-tx-li mui-ok" style="padding: 18.5px 15px;">
+					<a id="addMemberID" class="ql-tx-a">
+						<span class="mui-icon mui-icon-plus"></span>
+					</a>
+				</li>
+			</ul>
+			<ul class="mui-table-view">
+				<li class="mui-table-view-cell ql-li">
+					<a class="mui-navigate-right">全部成员<span id="groupCounts"></span></a>
+				</li>
+			</ul>
+		</div>
+
+		<ul class="mui-table-view" style="margin-top:15px;">
+			<li class="mui-table-view-cell ql-li">
+				<a class="mui-navigate-right">群名称<span id="groupNameID" class="mui-pull-right ql-icon-r"></span></a>
+			</li>
+			<li class="mui-table-view-cell ql-li">
+				<a class="mui-navigate-right">我在本群昵称<span id="nickNameIDs" class="mui-pull-right ql-icon-r"></span></a>
+			</li>
+			<div class="info"></div>
+		</ul>
+
+		<div class="b-btn add-btn-div">
+			<button id="delGroupID" type="button" class="mui-btn new-r-btn add-contact delete-btn">删除并退出群</button>
+		</div>
+
+		<script src="../js/mui.min.js"></script>
+		<script src="../js/jquery-1.9.1.js"></script>
+		<script src="../js/websqlwrapper.js"></script>
+		<script src="../js/constant.js"></script>
+		<script src="../js/acrosswebview.js"></script>
+		<script>
+			var userNow = localStorage.getItem("phoneNumber");
+			var dataBase = openDatabase("hcrchatDB", "1", "database for local caching", 20 * 1042 * 1024, function() {});
+			var groupCounts;
+			var shade;
+			var tab_group = db.instance('tab_group'),
+			    tab_group_member = db.instance('tab_group_member'),
+			    tab_invite_info = db.instance('tab_invite_info'),
+			    tab_chat_group = db.instance('tab_chat_group');
+				mui("#nickNameIDs")[0].innerHTML = localStorage.getItem("nickName");
+				mui.plusReady(function() {
+					var self = plus.webview.currentWebview();
+					mui("#groupNameID")[0].innerHTML = self.groupname;
+				function refushMember(){
+					dataBase.transaction(function(fx) {
+						fx.executeSql("select * from tab_group_member where group_id=?", [self.groupid],
+							function(fx, result) {
+								groupCounts = result.rows.length;
+								mui("#groupCounts")[0].innerHTML = "(" + groupCounts + ")";
+								for(var index = 0; index < result.rows.length; index++) {
+									console.log("group_id=" + result.rows.item(index)["group_id"]);
+									var li = document.createElement("li");
+									var ul = document.getElementById("ulID");
+									var str = "";
+									str += "<li class='mui-table-view-cell mui-media ql-tx-li'>";
+									str += "<a href='#' class='ql-tx-a'>";
+									str += "<img class='mui-media-object mui-pull-left ql-tx-a-img name-pic' src='" + result.rows.item(index)["user_img"] + "'>";
+									str += "</a>";
+									str += "<div class='mui-media-body'>" + result.rows.item(index)["group_user_name"] + "</div>";
+									li.innerHTML = str;
+									$("#liid").parent().prepend(li);
+								}
+							})
+					})
+				}
+					mui('#delGroupID')[0].addEventListener('tap', function() {
+						if(plus.networkinfo.getCurrentType() == 0 || plus.networkinfo.getCurrentType() == 1) {
+							shade = plus.nativeUI.showWaiting("加载中...");
+							setTimeout(function() {
+								shade.close();
+							}, 2000);
+							mui.toast("网络异常");
+						}
+						shade = plus.nativeUI.showWaiting("加载中...");
+						//function refreshGroupMember(){
+						dataBase.transaction(function(fx) {
+							fx.executeSql("select * from tab_group tg,tab_group_member tgm where tg.group_id=? and tgm.user_id=? ", [self.groupid, oneself],
+								function(fx, result) {
+									var isManager;
+									for(var i = 0; i < result.rows.length; i++) {
+										isManager = result.rows.item(i)["manager"] == oneself ? 1 : 0;
+									}
+									var sub = plus.webview.getWebviewById('tab-webview-subpage-chat.html');
+									var data = {
+										userId: oneself, //退出人ID
+										groupId: self.groupid, //群ID
+										isManager: isManager, // //是否为群主，0不为群主，1是群主
+										type: 11
+									};
+									VG.method(sub, "socketSendInterface", {
+										sendName: 'quitGroup',
+										data: data
+									}, function(e) {
+										if(e == 0) { //0 超時，1，成功2，失敗
+											shade.close();
+											mui.toast("连接超时");
+										} else if(e == 1) {
+											shade.close();
+										} else {
+											mui.toast("网络异常");
+											shade.close();
+										}
+									});
+
+								})
+						})
+						//}
+					})
+					document.getElementById("addMemberID").addEventListener('tap', function() {
+						dataBase.transaction(function(fx) {
+							fx.executeSql("select * from tab_group where group_id=?", [self.groupid],
+								function(fx, result) {
+									mui.openWindow({
+										url: "/groupOper/createGroup.html",
+										id: "createGroup.html",
+										extras: {
+											"groupid": self.groupid,
+											"type": self.type,
+											"groupname": self.groupname,
+										},
+										createNew: true
+									});
+								})
+						})
+					})
+				})
+			window.addEventListener('quitGroupResult', function(event) {
+				var data = event.detail.data;
+				if(data.type == 11 && data.result == 'success') {
+					tab_group.del('group_id === "' + data.groupId + '"', function() {
+						var et = plus.webview.getWebviewById('groupList.html');
+						if(et != null) {
+							et.evalJS("updateGroupList();");
+						}
+					});
+					tab_group_member.del('group_id ==="' + data.groupId + '"', function() {
+						var sessionid = oneself + "" + data.groupId;
+						mui.toast("退群成功");
+					});
+					tab_invite_info.del('id ==="' + oneself + "" + data.groupId + '"');
+					tab_chat_group.del('session_id === "' + oneself + "" + data.groupId + '"', function() {
+						setTimeout(function() {
+							var ww = plus.webview.getWebviewById('tab-webview-main.html');
+							mui.fire(ww, 'updatechatlist');
+							plus.webview.show(ww);
+						}, 1000);
+					})
+				}
+
+			})
+			
+		</script>
+
+	</body>
+
+</html>

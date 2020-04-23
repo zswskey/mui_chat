@@ -1,0 +1,283 @@
+<!DOCTYPE html>
+<html>
+
+	<head>
+		<meta charset="utf-8">
+		<title>Hello MUI</title>
+		<meta name="viewport" content="width=device-width, initial-scale=1,maximum-scale=1,user-scalable=no">
+		<meta name="apple-mobile-web-app-status-bar-style" content="black">
+
+		<link rel="stylesheet" href="../css/mui.min.css">
+		<link rel="stylesheet" href="../css/myapp.css">
+		<style>
+			html,
+			body {
+				background-color: #efeff4;
+			}
+			
+			.title {
+				margin: 20px 15px 10px;
+				color: #6d6d72;
+				font-size: 15px;
+			}
+			
+			.oa-contact-cell.mui-table .mui-table-cell {
+				padding: 11px 0;
+				vertical-align: middle;
+			}
+			
+			.oa-contact-cell {
+				position: relative;
+				margin: -11px 0;
+			}
+			
+			.oa-contact-avatar {
+				width: 75px;
+			}
+			
+			.oa-contact-avatar img {
+				border-radius: 50%;
+			}
+			
+			.oa-contact-content {
+				width: 100%;
+			}
+			
+			.oa-contact-name {
+				margin-right: 20px;
+			}
+			
+			.oa-contact-name,
+			oa-contact-position {
+				float: left;
+			}
+			/*===标题栏添加===*/
+			
+			.mui-bar-nav .mui-icon-plusempty {
+				color: #fff;
+				font-size: 34px;
+				padding-top: 5px;
+			}
+			
+			.mui-plus header.mui-bar {
+				display: none!important;
+			}
+			
+			.mui-plus .mui-bar-nav~.mui-content {
+				padding: 0!important;
+			}
+			
+			.mui-plus .plus {
+				display: inline;
+			}
+			
+			.plus {
+				display: none;
+			}
+			
+			#topPopover {
+				position: fixed;
+				top: 16px;
+				right: 6px;
+			}
+			
+			#topPopover .mui-popover-arrow {
+				left: auto;
+				right: 6px;
+			}
+			
+			.mui-popover .mui-scroll-wrapper-v {
+				height: 106px;
+				margin: 0px;
+			}
+			
+			.mui-content {
+				padding: 0px;
+			}
+			
+			.mui-popover {
+				width: 180px;
+			}
+			
+			.add-icon {
+				font-size: 17px;
+			}
+			
+			.mui-icon-personadd:before {
+				font-size: 28px;
+				margin-left: -5px;
+				margin-right: 10px;
+				color: #fca454;
+			}
+			/*===建群icon===*/
+			
+			@font-face {
+				font-family: "iconfont";
+				src: url('../fonts/iconfont.ttf') format('truetype')
+			}
+			
+			.iconfont {
+				font-family: "iconfont" !important;
+				font-style: normal;
+				-webkit-font-smoothing: antialiased;
+				-moz-osx-font-smoothing: grayscale;
+			}
+			
+			.icon-jiaqun:before {
+				content: "\e600";
+				font-size: 22px;
+				margin-right: 10px;
+				color: #93bd3c;
+			}
+			
+			#list {
+				/*避免导航边框和列表背景边框重叠*/
+				margin-top: -1px;
+			}
+		</style>
+	</head>
+
+	<body>
+		<header class="mui-bar mui-bar-nav">
+			<a class="mui-action-back mui-icon mui-icon-left-nav mui-pull-left"></a>
+			<a id="menu" class="mui-action-menu mui-icon mui-icon-plusempty mui-pull-right" style="color: #fff;" href="#topPopover"></a>
+			<h1 id="title" class="mui-title">产品名称</h1>
+		</header>
+		<!--新加好友、群组开始-->
+		<ul class="mui-table-view mui-table-view-chevron" style="margin-top: 0px;">
+			<li id="liIDS" class="mui-table-view-cell">
+				<img class="mui-media-object mui-pull-left" src="../images/new.png">
+				<div id="divID" class="mui-media-body">
+					<div class="mui-ellipsis center-name">新加好友</div>
+				</div>
+			</li>
+			<li id="groupIDS" class="mui-table-view-cell">
+				<img class="mui-media-object mui-pull-left" src="../images/group.png">
+				<div class="mui-media-body">
+					<div class="mui-ellipsis center-name">群组</div>
+				</div>
+			</li>
+		</ul>
+		<div class="mui-content">
+			<ul id="ulID" class="mui-table-view mui-table-view-striped mui-table-view-condensed">
+			</ul>
+		</div>
+		<!--右上角弹出菜单开始-->
+		<div id="topPopover" class="mui-popover">
+			<div class="mui-popover-arrow"></div>
+			<div class="mui-scroll-wrapper mui-scroll-wrapper-v">
+				<div class="mui-scroll">
+					<ul class="mui-table-view">
+						<li id="addFriendID" class="mui-table-view-cell">
+							<a class="add-icon mui-icon mui-icon-personadd" href="#">新加好友</a>
+						</li>
+						<li id="createGroupID" class="mui-table-view-cell">
+							<a class="add-icon mui-icon iconfont icon-jiaqun" href="#">创建群组</a>
+						</li>
+					</ul>
+				</div>
+			</div>
+		</div>
+	</body>
+	<script src="../js/mui.min.js"></script>
+	<script src="../js/websqlwrapper.js"></script>
+	<script src="../js/constant.js"></script>
+	<script src="../js/jquery-1.9.1.js"></script>
+	<script>
+		mui('.mui-scroll-wrapper').scroll();
+		mui('body').on('shown', '.mui-popover', function(e) {
+			//console.log('shown', e.detail.id);//detail为当前popover元素
+		});
+		mui('body').on('hidden', '.mui-popover', function(e) {
+			//console.log('hidden', e.detail.id);//detail为当前popover元素
+		});
+		//通讯录表
+		//读取本地数据库
+		var dataBase = openDatabase("hcrchatDB", "1", "database for local caching", 20 * 1042 * 1024, function() {});
+		window.onload = function() {
+			updateDatabase();
+			document.getElementById('addFriendID').addEventListener('tap', function() {
+				mui.openWindow({
+					url: "/friendOper/add-friend-search.html",
+					id: "add-friend-search.html",
+					createNew: true //是否重复创建同样id的webview，默认为false:不重复创建，直接显示
+				})
+			})
+			document.getElementById("createGroupID").addEventListener('tap', function() {
+				mui.openWindow({
+					url: "/groupOper/createGroup.html",
+					id: "createGroup.html",
+					extras: {
+						"type": 6 //6代表创建群聊
+					},
+					createNew: true
+				});
+			})
+			document.getElementById("groupIDS").addEventListener('tap', function() {
+				mui.openWindow({
+					url: "/groupOper/groupList.html",
+					id: "groupList.html",
+					extras: {},
+					createNew: true
+				})
+			})
+			document.getElementById("liIDS").addEventListener('tap', function() {
+				var reqCount = 'txl' + localStorage.getItem("phoneNumber");
+				localStorage.removeItem(reqCount);
+				$("#spanID").remove();
+				var objj = plus.webview.getWebviewById('tab-webview-main.html');
+				objj.evalJS("updateContactNumber();");
+				mui.openWindow({
+					url: "/friendOper/new-friend.html",
+					id: "new-friend.html",
+					createNew: true
+				});
+			})
+		}
+
+		function updateDatabase() {
+			var reqCount = 'txl' + localStorage.getItem("phoneNumber");
+			var reqCount = localStorage.getItem(reqCount) ? parseInt(localStorage.getItem(reqCount)) : 0;
+			if(reqCount && reqCount > 0) {
+				$("#divID").append('<span id="spanID" class="mui-badge mui-badge-primary " style="position: absolute;top:50%;margin-top:-9px;right: 15px;" >' + reqCount + '</span>');
+			}else{
+				$("#spanID").remove();
+			}
+			dataBase.transaction(function(fx) {
+				//查询数据
+				fx.executeSql(
+					"select * from tab_address_book where user_id=?", [localStorage.getItem("phoneNumber")],
+					function(fx, result) {
+						var ul = document.getElementById("ulID");
+						ul.innerHTML = '';
+						if(result.rows.length > 0) {
+							for(var index = 0; index < result.rows.length; index++) {
+								var li = document.createElement("li");
+								var str = "";
+								str += "<li class='mui-table-view-cell mui-media time-li' onclick='findFriend(" + result.rows.item(index)["friend_id"] + ")'><img class='mui-media-object mui-pull-left' src='" + result.rows.item(index)["friend_img"] + "'><div 											class='mui-media-body'>";
+								str += "<div class='mui-ellipsis center-name'><a value='" + result.rows.item(index)["friend_id"] + "' >" + result.rows.item(index)["friend_remark"] + "</a></div>";
+								str += "</div>";
+								li.innerHTML = str;
+								ul.appendChild(li);
+							}
+						}
+					}
+				)
+
+			});
+		}
+
+		function findFriend(obj) {
+			mui.openWindow({
+				url: "/friendOper/add-friend.html",
+				id: "add-friend.html",
+				extras: {
+					"friendOper": 0,//0代表操作好友消息
+					"friend_id": obj//朋友账号
+				},
+				createNew: true
+			})
+		}
+	</script>
+
+</html>

@@ -1,0 +1,163 @@
+{
+  "main.html": {
+    "refer": [
+      "setting.html"
+    ],
+    "resources": [
+      "js/md5.min.js",
+      "css/imgload.css",
+      "js/imgload.js",
+      "js/mui.min.js",
+      "css/mui.min.css",
+      "images/logo_gray.png",
+      "images/loading.png",
+      "images/translate.png"
+    ]
+  },
+  "login.html": {
+    "resources": [
+      "js/app.js",
+      "js/mui.min.js",
+      "images/sinaweibo.png",
+      "css/mui.min.css",
+      "css/style.css",
+      "images/weixin.png",
+      "images/qq.png",
+      "js/mui.enterfocus.js",
+      "fonts/mui.ttf"
+    ],
+    "refer": [
+      "main.html",
+      "reg.html"
+    ]
+  },
+  "setting.html": {
+    "resources": [
+      "libs/easymob-webim-sdk/easemob.im-1.0.5.js",
+      "fonts/mui.ttf",
+      "libs/easymob-webim-sdk/json2.js",
+      "libs/easymob-webim-sdk/jquery-1.11.1.js",
+      "js/mui.locker.js",
+      "js/feedback.js",
+      "css/feedback-page.css",
+      "js/feedback-page.js",
+      "libs/easymob-webim-sdk/strophe-custom-2.0.0.js",
+      "js/mui.view.js",
+      "images/iconfont-tianjia.png"
+    ],
+    "refer": []
+  },
+  "reg.html": {
+    "refer": [
+      "login.html"
+    ],
+    "resources": [
+      "js/app.js",
+      "js/mui.min.js",
+      "fonts/mui.ttf",
+      "css/mui.min.css",
+      "css/style.css"
+    ]
+  },
+  "index.html": {
+    "resources": [
+      "js/mui.min.js",
+      "js/myStorage.js",
+      "fonts/mui.ttf",
+      "css/mui.min.css",
+      "list.html"
+    ],
+    "refer": [
+      "list.html"
+    ]
+  },
+  "list.html": {
+    "resources": [
+      "js/mui.min.js",
+      "fonts/mui.ttf",
+      "css/mui.min.css"
+    ],
+    "refer": [
+      "examples/template.html",
+      "examples/im-chat.html",
+      "examples/im-chat-group.html",
+      "examples/im-chat-list.html",
+      "examples/tab-webview-main.html"
+    ]
+  },
+  "examples/im-chat.html": {
+    "resources": [
+      "js/mui.imageViewer.js",
+      "js/socket.io-1.4.5.js",
+      "css/app.css",
+      "css/myapp.css",
+      "css/mui.imageviewer.css",
+      "js/arttmpl.js",
+      "fonts/iconfontq.ttf",
+      "fonts/iconfont.ttf",
+      "js/mui.min.js",
+      "fonts/mui.ttf",
+      "css/mui.min.css",
+      "css/chat.css",
+      "images/tx2.jpg",
+      "js/rotate-image.js",
+      "js/exif.js",
+      "js/chat.js"
+    ]
+  },
+  "examples/template.html": {
+    "resources": [
+      "js/mui.min.js",
+      "fonts/mui.ttf",
+      "css/mui.min.css",
+      "css/myapp.css",
+      "fonts/iconfontq.ttf"
+    ]
+  },
+  "examples/im-chat-group.html": {
+    "resources": [
+      "js/mui.imageViewer.js",
+      "js/exif.js",
+      "js/chat.js",
+      "js/socket.io-1.4.5.js",
+      "css/app.css",
+      "css/mui.imageviewer.css",
+      "js/arttmpl.js",
+      "css/chat.css",
+      "images/tx2.jpg",
+      "js/mui.min.js",
+      "fonts/mui.ttf",
+      "css/mui.min.css",
+      "fonts/iconfontq.ttf"
+    ]
+  },
+  "examples/im-chat-list.html": {
+    "resources": [
+      "js/mui.imageViewer.js",
+      "js/exif.js",
+      "js/socket.io-1.4.5.js",
+      "css/app.css",
+      "css/mui.imageviewer.css",
+      "js/arttmpl.js",
+      "css/chat.css",
+      "js/mui.min.js",
+      "fonts/mui.ttf",
+      "css/mui.min.css",
+      "fonts/iconfontq.ttf"
+    ]
+  },
+  "examples/tab-webview-main.html": {
+    "resources": [
+      "examples/tab-webview-subpage-about.html",
+      "js/mui.min.js",
+      "fonts/mui.ttf",
+      "css/mui.min.css"
+    ],
+    "refer": [
+      "examples/tab-webview-subpage-setting.html",
+      "examples/tab-webview-subpage-chat.html",
+      "examples/tab-webview-subpage-contact.html",
+      "examples/tab-webview-subpage-about.html"
+    ]
+  }
+}

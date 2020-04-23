@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html>
+
+	<head>
+		<meta charset="utf-8">
+		<title>主页</title>
+		<meta name="viewport" content="width=device-width, initial-scale=1,maximum-scale=1,user-scalable=no">
+		<meta name="apple-mobile-web-app-capable" content="yes">
+		<meta name="apple-mobile-web-app-status-bar-style" content="black">
+
+		<link rel="stylesheet" href="../css/mui.min.css">
+		<style>
+			html,
+			body {
+				background-color: #efeff4;
+			}
+		</style>
+	</head>
+
+	<body>
+		<header class="mui-bar mui-bar-nav">
+			<a id="menu" class="mui-action-menu mui-icon mui-icon-plusempty mui-pull-right" style="color: #fff;" href="#topPopover"></a>
+			<h1 id="title" class="mui-title">聊天</h1>
+		</header>
+		<nav class="mui-bar mui-bar-tab" style="background-color: #FFFFFF;">
+			<a id="defaultTab" class="mui-tab-item mui-active" href="tab-webview-subpage-chat.html">
+				<span class="mui-icon mui-icon-chatbubble"></span>
+				<span class="mui-tab-label">聊天</span>
+			</a>
+			<a class="mui-tab-item" href="tab-webview-subpage-contact.html">
+				<span class="mui-icon mui-icon-contact"></span>
+				<span class="mui-tab-label">通讯录</span>
+			</a>
+			<a class="mui-tab-item" href="tab-webview-subpage-setting.html">
+				<span class="mui-icon mui-icon-person"></span>
+				<span class="mui-tab-label">我</span>
+			</a>
+		</nav>
+		<script src="../js/mui.min.js"></script>
+		<script type="text/javascript" charset="utf-8">
+			 //mui初始化
+			mui.init();
+			var subpages = ['tab-webview-subpage-chat.html', 'tab-webview-subpage-contact.html', 'tab-webview-subpage-setting.html'];
+			var subpage_style = {
+				top: '45px',
+				bottom: '51px'
+			};
+			
+			var aniShow = {};
+			
+			 //创建子页面，首个选项卡页面显示，其它均隐藏；
+			 var contentWebview =null, self =null;
+			mui.plusReady(function() {
+				 self = plus.webview.currentWebview();
+				for (var i = 0; i < 3; i++) {
+					var temp = {};
+					var sub = plus.webview.create(subpages[i], subpages[i], subpage_style);
+					if (i > 0) {
+						sub.hide();
+					}else{
+						temp[subpages[i]] = "true";
+						mui.extend(aniShow,temp);
+					}
+					self.append(sub);
+				}
+				 //当前激活选项
+				var activeTab = subpages[0];
+				var title = document.getElementById("title");
+				 //选项卡点击事件
+				mui('.mui-bar-tab').on('tap', 'a', function(e) {
+					var targetTab = this.getAttribute('href');
+					for (var a in subpages) {
+						if(subpages[a]==targetTab){
+							contentWebview = self.children()[a];
+						}
+					}
+					if (targetTab == activeTab) {
+						return;
+					}
+					//更换标题
+					title.innerHTML = this.querySelector('.mui-tab-label').innerHTML;
+					//隐藏当前;
+					plus.webview.hide(activeTab);
+					//显示目标选项卡
+					//若为iOS平台或非首次显示，则直接显示
+					if(mui.os.ios||aniShow[targetTab]){
+						plus.webview.show(targetTab);
+					}else{
+						//否则，使用fade-in动画，且保存变量
+						var temp = {};
+						temp[targetTab] = "true";
+						mui.extend(aniShow,temp);
+						plus.webview.show(targetTab,"fade-in",300);
+					}
+					
+					//更改当前活跃的选项卡
+					activeTab = targetTab;
+				});
+				var menuElem = document.getElementById("menu");
+				menuElem.addEventListener('tap', function(e) {
+				e.stopPropagation();
+				if(contentWebview==null){
+					contentWebview = self.children()[0];
+				}
+				contentWebview.evalJS('mui("#topPopover").popover("toggle")');
+			   });
+			    
+		   });
+		   
+		   //自定义事件,刷新聊天列表
+			document.addEventListener('updatechatlist', function() {
+				var defaultTab = document.getElementById("defaultTab");
+				 var wvs=plus.webview.getWebviewById('tab-webview-subpage-chat.html');
+				 wvs.evalJS("pulldownRefresh();");
+				//模拟点击
+				mui.trigger(defaultTab, 'tap');
+				//切换选项卡高亮
+				var current = document.querySelector(".mui-bar-tab>.mui-tab-item.mui-active");
+				if (defaultTab !== current) {
+					current.classList.remove('mui-active');
+					defaultTab.classList.add('mui-active');
+				}
+			});
+		    //更新聊天角标
+		   function updateChatNumber(){
+			   var chatNumber = localStorage.getItem("chatNumber")? localStorage.getItem("chatNumber") : 0 ;
+			   var chatbubble = document.querySelector('.mui-icon-chatbubble');
+			   if(chatNumber&&chatNumber>0){
+					chatbubble.innerHTML = '<span class="mui-badge">'+chatNumber+'</span>';
+			   }else{
+			   		chatbubble.innerHTML = '';
+			   }
+		   }
+		   //更新好友请求数据
+		   function updateContactNumber(){
+		   	var reqCount='txl'+localStorage.getItem("phoneNumber");
+		   	var reqCount=localStorage.getItem(reqCount)?parseInt(localStorage.getItem(reqCount)):0;
+		   	var contactbubble = document.querySelector('.mui-icon-contact');
+		   	if(reqCount && reqCount>0){
+		   		contactbubble.innerHTML='<span class="mui-badge">'+reqCount+'</span>';
+		   	}else{
+		   		contactbubble.innerHTML='';
+		   	}
+		   }
+		   
+		</script>
+	</body>
+
+</html>

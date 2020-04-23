@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<!DOCTYPE html>
+<html>
+
+	<head>
+		<meta charset="UTF-8">
+		<meta name="viewport" content="width=device-width,initial-scale=1,minimum-scale=1,maximum-scale=1,user-scalable=no" />
+		<title></title>
+
+		<link href="../css/mui.min.css" rel="stylesheet" />
+		<link href="../css/myapp.css" rel="stylesheet" />
+	</head>
+
+	<body>
+		<!--标题栏开始-->
+		<header id="header" class="mui-bar mui-bar-nav">
+			<a class="mui-action-back mui-icon mui-icon-left-nav mui-pull-left"></a>
+			<h1 class="mui-title">群基本信息</h1>
+			<a id='done' class="mui-btn mui-btn-link mui-pull-right">完成</a>
+		</header>
+		<!--搜索框开始-->
+		<div id="list" class="mui-pages" style="margin-top: 54px; padding: 0 15px;">
+			<div id="feedback" class="mui-page feedback mui-page-center" style="">
+				<div class="mui-page-content">
+					<p>群名称</p>
+					<div class="mui-input-row">
+						<input id="groupNameID" type="text" class="mui-input-clear  contact" placeholder="请填写群名称" data-input-clear="19"><span class="mui-icon mui-icon-clear mui-hidden"></span>
+					</div>
+					<p>备注</p>
+					<div class="mui-input-row">
+						<input id="groupNoteID" type="text" class="mui-input-clear  contact" placeholder="请填写群备注" data-input-clear="19"><span class="mui-icon mui-icon-clear mui-hidden"></span>
+					</div>
+					<div class="b-btn">
+						<button id="saveGroup" type="button" class="mui-btn new-r-btn add-contact" style="width: 100%; margin: 0;">完成</button>
+					</div>
+				</div>
+			</div>
+		</div>
+		<!--搜索框结束-->
+		<script src="../js/mui.min.js"></script>
+		<script src="../js/jquery-1.9.1.js"></script>
+		<script src="../js/websqlwrapper.js"></script>
+		<script src="../js/constant.js"></script>
+		<script src="../js/acrosswebview.js"></script>
+
+		<script>
+			var user = localStorage.getItem("phoneNumber");
+			var shade;
+			var tab_group = db.instance('tab_group'),
+				tab_group_member = db.instance('tab_group_member'),
+				tab_chat_group = db.instance('tab_chat_group');
+			var dataBase = openDatabase("hcrchatDB", "1", "database for local caching", 10 * 1024 * 1024, function() {});
+			window.onload = function() {
+				dataBase.transaction(function(fx) {
+					fx.executeSql("select * from tab_group_member where user_id=?", [oneself])
+				})
+				document.getElementById("saveGroup").addEventListener('tap', function() {
+					if($("#groupNameID").val() == "") {
+						mui.toast("请填写群名称");
+						return false;
+						$("#groupNameID").focus();
+					} else if($("#groupNoteID").val() == "") {
+						mui.toast("请填写群备注");
+						return false;
+						$("#groupNoteID").focus();
+					} else {
+						if(plus.networkinfo.getCurrentType() == 0 || plus.networkinfo.getCurrentType() == 1) {
+							shade = plus.nativeUI.showWaiting("加载中...");
+							setTimeout(function() {
+								shade.close();
+							}, 2000);
+							mui.toast("网络异常");
+						}
+						shade = plus.nativeUI.showWaiting("加载中...");
+						mui.plusReady(function() {
+							var self = plus.webview.currentWebview();
+
+							var sub = plus.webview.getWebviewById('tab-webview-subpage-chat.html');
+							var data = {
+								grouphead: "",
+								groupname: $("#groupNameID").val(),
+								groupremark: $("#groupNoteID").val(),
+								groupid: "",
+								usernick: localStorage.getItem("nickName"),
+								user: user,
+								to: self.checkedAcc,
+								type: self.type
+							};
+							VG.method(sub, "socketSendInterface", {
+								sendName: 'createGroupFriends',
+								data: data
+							}, function(e) {
+								if(e == 0) { //0 超時，1，成功2，失敗
+									shade.close();
+									mui.toast("连接超时");
+								} else if(e == 1) {
+									mui.toast("群邀请信息已发送成功");
+									shade.close();
+								} else {
+									mui.toast("网络异常");
+									shade.close();
+								}
+							});
+
+							window.addEventListener('addGroupFriends', function(event) {
+								var data = event.detail.data;
+								console.log("转发过来" + JSON.stringify(data));
+								var type = data.type;
+								if(type == 6) {
+									if(data.manager_id == user) {
+										if(data.result == 'success') {
+											dataBase.transaction(function(fx) {
+												tab_group.save({
+													group_id: data.groupid,
+													group_name: data.groupname,
+													group_comment: data.groupremark,
+													manager: data.manager_id
+												}, 'group_id');
+												var id = data.manager_id + "" + data.groupid;
+												tab_group_member.save({
+													id: id,
+													user_id: data.manager_id,
+													group_user_name: data.usernick,
+													group_id: data.groupid,
+													user_img: localStorage.getItem("userImg")
+												}, 'id');
+
+												tab_chat_group.save({
+														id: new Date().getTime(),
+														send_id: '1',
+														receive_id: oneself,
+														message: '欢迎入群，开始聊天吧！',
+														message_type: '2',
+														group_id: data.groupid,
+														session_id: oneself + data.groupid,
+														send_state: '1'
+													},
+													'session_id',
+													function() {
+														setTimeout(function() {
+															var sessionid = oneself + "" + data.groupid;
+															document.activeElement.blur();
+															mui.openWindow({
+																id: sessionid,
+																url: '/examples/im-chat-group.html',
+																extras: {
+																	title: data.groupname,
+																	userid: data.groupid
+																},
+																createNew: true
+															});
+															var nowChatNum = localStorage.getItem(sessionid) ? parseInt(localStorage.getItem(sessionid)) + 1 : 1;
+															localStorage.setItem(sessionid, nowChatNum);
+															var w = plus.webview.getWebviewById('tab-webview-main.html');
+															mui.fire(w, 'updatechatlist');
+															//plus.webview.show(w);
+														}, 1000);
+													});
+
+											});
+											$("#saveGroup").html("群创建成功");
+											$("#saveGroup").attr("disabled", "true");
+										} else {
+											mui.toast("创建群失败");
+										}
+									}
+								}
+							})
+						})
+					}
+				})
+			}
+		</script>
+
+	</body>
+
+</html>

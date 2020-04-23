@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html class="ui-page-login">
+
+	<head>
+		<meta charset="utf-8">
+		<meta name="viewport" content="width=device-width,initial-scale=1,minimum-scale=1,maximum-scale=1,user-scalable=no" />
+		<title></title>
+		<link href="css/mui.min.css" rel="stylesheet" />
+		<link href="css/myapp.css" rel="stylesheet" />
+		<style>
+			.area {
+				margin: 20px auto 0px auto;
+			}
+			
+			.mui-input-group:first-child {
+				margin-top: 20px;
+			}
+			
+			.mui-input-group label {
+				width: 35%;
+			}
+			
+			.mui-input-row label~input,
+			.mui-input-row label~select,
+			.mui-input-row label~textarea {
+				width: 65%;
+			}
+			
+			.mui-checkbox input[type=checkbox],
+			.mui-radio input[type=radio] {
+				top: 6px;
+			}
+			
+			.mui-content-padded {
+				margin-top: 25px;
+			}
+			
+			.mui-btn {
+				padding: 10px;
+			}
+		</style>
+
+	</head>
+
+	<body>
+		<header class="mui-bar mui-bar-nav">
+			<a class="mui-action-back mui-icon mui-icon-left-nav mui-pull-left"></a>
+			<h1 class="mui-title">注册</h1>
+		</header>
+		<div class="mui-content">
+			<form id="formID" class="mui-input-group" action="" method="post">
+				<div class="mui-input-row">
+					<label>手机号码</label>
+					<input id='account' type="text" class="mui-input-clear mui-input" placeholder="请输入手机号码"  maxlength="11" onKeypress="if (event.keyCode < 45 || event.keyCode > 57) event.returnValue = false;"onblur="checkAccount()">
+				</div>
+				<div class="mui-input-row">
+					<label>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;昵称</label>
+					<input id='nickName' type="text" class="mui-input-clear mui-input" placeholder="请输入昵称" maxlength="50" on="isEmojiCharacter(this)">
+				</div>
+				<!--<div class="mui-input-row">
+					<label>头像</label>
+					<input id='portrait' type="text" class="mui-input-clear mui-input">
+				</div>-->
+				<div class="mui-input-row">
+					<label>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;密码</label>
+					<input id="password" type="password" class="mui-input-clear mui-input" placeholder="由8位数字与字母的组合" onblur="checkPwd()">
+				</div>
+				<div class="mui-input-row">
+					<label>确认密码</label>
+					<input id="password_confirm" type="password" class="mui-input-clear mui-input" placeholder="由8位数字与字母的组合" onblur="checkPwdConfirm()">
+				</div>
+			</form>
+			<div class="mui-content-padded">
+				<button id='reg' class="mui-btn mui-btn-block mui-btn-primary">注册</button>
+			</div>
+			<div><span id="spanID"></span></div>
+			<div class="mui-content-padded">
+				<p>注册真实可用，注册成功后的用户可用于登录</p>
+			</div>
+		</div>
+		<script src="js/mui.min.js"></script>
+		<script src="js/websqlwrapper.js"></script>
+		<script src="js/constant.js"></script>
+		<script>
+		
+			function isEmojiCharacter(substring) {    
+    for ( var i = 0; i < substring.length; i++) {    
+        var hs = substring.charCodeAt(i);    
+        if (0xd800 <= hs && hs <= 0xdbff) {    
+            if (substring.length > 1) {    
+                var ls = substring.charCodeAt(i + 1);    
+                var uc = ((hs - 0xd800) * 0x400) + (ls - 0xdc00) + 0x10000;    
+                if (0x1d000 <= uc && uc <= 0x1f77f) {    
+                    return true;    
+                }    
+            }    
+        } else if (substring.length > 1) {    
+            var ls = substring.charCodeAt(i + 1);    
+            if (ls == 0x20e3) {    
+                return true;    
+            }    
+        } else {    
+            if (0x2100 <= hs && hs <= 0x27ff) {    
+                return true;    
+            } else if (0x2B05 <= hs && hs <= 0x2b07) {    
+                return true;    
+            } else if (0x2934 <= hs && hs <= 0x2935) {    
+                return true;    
+            } else if (0x3297 <= hs && hs <= 0x3299) {    
+                return true;    
+            } else if (hs == 0xa9 || hs == 0xae || hs == 0x303d || hs == 0x3030    
+                    || hs == 0x2b55 || hs == 0x2b1c || hs == 0x2b1b    
+                    || hs == 0x2b50) {    
+                return true;    
+            }    
+        }    
+    }    
+}   
+			//校验手机号码的正则表达式
+			function checkAccount() {
+				var phone = document.getElementById('account').value;
+				if(phone != null && phone != "") {
+					if(!(/^1[3|4|5|7|8]\d{9}$/.test(phone))) {
+						mui.toast("请输入正确的手机号码，谢谢！")
+						document.getElementById('account').focus();
+						return false;
+					} else {
+						mui.ajax(Url+"/user/isexist", {
+							data: {
+								account: mui("#account")[0].value
+							},
+							dataType: 'json', //服务器返回json格式数据
+							type: 'get', //HTTP请求类型
+							timeout: 2000, //超时时间设置为10秒；
+							success: function(data) {
+								if(!data.status) { //这个返回为false，代表不能被注册
+									mui.toast('账号已被注册，请重新输入账号');
+								}
+							},
+							error: function(xhr, type, errorThrown) {
+								mui.toast("网络异常");
+							}
+						});
+
+					}
+				}
+
+			}
+			//检查密码是否合法
+			function checkPwd() {
+				if(mui("#password")[0].value != null && mui("#password")[0].value != "") {
+					if(mui("#password")[0].value != mui("#password_confirm")[0].value &&mui("#password_confirm")[0].value!='') {
+						mui.toast("密码不一致，请重新核对");
+						mui("#password")[0].focus();
+						return false;
+						document.getElementById("password_confirm").focus();
+					}else if(!(/^(?![0-9]+$)(?![a-zA-Z]+$)[0-9A-Za-z]{8,20}$/).test(mui("#password")[0].value)) {
+						mui.toast("密码由8位数字与字母组合");
+						document.getElementById("password").focus();
+						return false;
+						mui("#password")[0].focus();
+					}
+				}
+			}
+
+			//检查确认密码是否合法
+			function checkPwdConfirm() {
+				if(mui("#password_confirm")[0].value != null && mui("#password_confirm")[0].value != "" &&mui("#password")[0].value=='') {
+					if(!(/^(?![0-9]+$)(?![a-zA-Z]+$)[0-9A-Za-z]{8,20}$/).test(mui("#password_confirm")[0].value)) {
+						mui.toast("确认密码由8位数字与字母组合");
+						document.getElementById("password_confirm").focus();
+						return false;
+						mui("#password_confirm")[0].focus();
+					} else if(mui("#password")[0].value != mui("#password_confirm")[0].value &&mui("#password")[0].value!='') {
+						mui.toast("密码不一致，请重新核对");
+						mui("#password_confirm")[0].focus();
+						return false;
+						document.getElementById("password_confirm").focus();
+					}
+				}
+			}
+			mui("#reg")[0].addEventListener('tap', function() {
+				if(plus.networkinfo.getCurrentType() == 0 || plus.networkinfo.getCurrentType() == 1) {
+					setTimeout(function(){
+						w.close();
+					},2000)
+					mui.toast("网络异常");
+				}else{
+				var acc = mui("#account")[0].value;
+				var pwd = mui("#password")[0].value;
+				var nickName = mui("#nickName")[0].value;
+				var pwdConfirm = mui("#password_confirm")[0].value;
+				if(acc == "" || acc == null) {
+					mui.toast("您的手机号不能为空");
+					return false;
+				} else if(pwd == "" || pwd == null) {
+					mui.toast("密码不能为空");
+					mui("#password")[0].focus();
+					return false;
+				} else if(pwdConfirm == "" || pwdConfirm == null) {
+					mui.toast("确认密码不能为空");
+					mui("#password_confirm")[0].focus();
+					return false;
+				} else if(pwd != pwdConfirm) {
+					mui.toast("密码不一致，请重新核对");
+					return false;
+				}
+				mui.ajax(Url+"/user/reg", {
+					data: {
+						account: mui("#account")[0].value,
+						password: mui("#password")[0].value,
+						nickName: mui("#nickName")[0].value
+					},
+					dataType: 'json', //服务器返回json格式数据
+					type: 'post', //HTTP请求类型
+					timeout: 2000, //超时时间设置为10秒；
+					success: function(data) {
+						if(!data.reg) { //这个返回为false，代表不能被注册
+							//返回为true，可以注册
+							//mui("#spanID")[0].innerHTML="注册失败";
+							mui.toast("账号已被注册，请重新输入账号");
+							setTimeout(function(){
+								w.close();
+							},2000);
+							return false;
+							
+						} else {
+							mui.toast("注册成功");
+							mui.ajax(Url+"/user/login", {
+								data: {
+									account: mui("#account")[0].value,
+									password: mui("#password")[0].value
+								},
+								dataType: 'json', //服务器返回json格式数据
+								type: 'post', //HTTP请求类型
+								timeout: 10000, //超时时间设置为10秒；
+								success: function(data) {
+									if(!data.status) {
+									mui.toast("账号或者密码错误");
+									setTimeout(function(){
+										w.close();
+									},2000);
+								}else if(data.status){
+										localStorage.setItem("phoneNumber", data.data[0].account);
+										localStorage.setItem("password", data.data[0].password);
+										localStorage.setItem("nickName", data.data[0].user_name);
+										localStorage.setItem("userImg", data.data[0].img);
+										mui.openWindow({
+											url: "/examples/tab-webview-main.html",
+											id: "tab-webview-main.html",
+											styles: {},
+											extras: {
+
+											},
+											createNew: false, //是否重复创建同样id的webview，默认为false:不重复创建，直接显示
+										})
+										w.close();
+									}
+
+								}
+
+							});
+
+						}
+					},
+					error: function(xhr, type, errorThrown) {
+						w.close();
+						mui.toast("网络异常");
+					}
+				});
+				}
+				
+
+			})
+		</script>
+	</body>
+
+</html>

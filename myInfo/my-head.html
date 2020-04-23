@@ -1,0 +1,325 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="UTF-8">		
+		<meta name="viewport" content="width=device-width,initial-scale=1,minimum-scale=1,maximum-scale=1,user-scalable=no" />
+	    <title></title>
+	    <link href="../css/mui.min.css" rel="stylesheet"/>
+	    <link href="../css/myapp.css" rel="stylesheet"/>
+	</head>
+	<body>
+		<!--标题栏开始-->
+		<header id="header" class="mui-bar mui-bar-nav" style="" >
+			
+			<a class="mui-action-back mui-icon mui-icon-left-nav mui-pull-left"></a>
+			<h1 class="mui-title">产品名称</h1>
+			<a id="menu" class="mui-action-menu mui-icon mui-icon-more mui-pull-right" href="#topPopover" style="color: #fff;"></a>
+		</header>
+		<!--标题栏结束-->
+		
+		<script src="../js/mui.min.js"></script>
+		<script src="../js/jquery-1.9.1.js"></script>
+		<script>
+		window.onload=function(){
+			var mainImage=document.getElementById('headImg');
+			mui("#menu")[0].addEventListener('tap', function() { 
+            if (mui.os.plus) { 
+                var a = [{ 
+                    title: "拍照" 
+                }, { 
+                    title: "从手机相册选择" 
+                }]; 
+                plus.nativeUI.actionSheet({ 
+                    title: "修改用户头像", 
+                    cancel: "取消", 
+                    buttons: a 
+                }, function(b) { /*actionSheet 按钮点击事件*/ 
+                    switch (b.index) { 
+                        case 0: 
+                            break; 
+                        case 1: 
+                            getImage(); /*拍照*/ 
+                            break; 
+                        case 2: 
+                            galleryImg();/*打开相册*/ 
+                            break; 
+                        default: 
+                            break; 
+                    } 
+                }) 
+            } 
+        	}, false);
+        	//拍照
+        	 function getImage() { 
+	            var c = plus.camera.getCamera(); 
+	            c.captureImage(function(e) { 
+	                plus.io.resolveLocalFileSystemURL(e, function(entry) { 
+	                    var s = entry.toLocalURL() + "?version=" + new Date().getTime(); 
+	                    uploadHead(s); /*上传图片*/ 
+	                }, function(e) { 
+	                    console.log("读取拍照文件错误：" + e.message); 
+	                }); 
+	            }, function(s) { 
+	                console.log("error" + JSON.stringify(s)); 
+	            }, { 
+	                filename: "_doc/head.png" 
+	            }) 
+        	} 
+		}
+		
+		//本地相册选择 
+        function galleryImg() { 
+            plus.gallery.pick(function(a) { 
+                plus.io.resolveLocalFileSystemURL(a, function(entry) { 
+                    plus.io.resolveLocalFileSystemURL("_doc/", function(root) { 
+                        root.getFile("head.png", {}, function(file) { 
+                            //文件已存在 
+                            file.remove(function() { 
+                                //console.log("file remove success"); 
+                                entry.copyTo(root, 'head.png', function(e) { 
+                                        var e = e.fullPath + "?version=" + new Date().getTime(); 
+                                        uploadHead(e); /*上传图片*/ 
+                                        //变更大图预览的src 
+                                        //目前仅有一张图片，暂时如此处理，后续需要通过标准组件实现 
+                                    }, 
+                                    function(e) { 
+                                        console.log('copy image fail:' + e.message); 
+                                    }); 
+                            }, function() { 
+                                console.log("delete image fail:" + e.message); 
+                            }); 
+                        }, function() { 
+                            //文件不存在 
+                            entry.copyTo(root, 'head.png', function(e) { 
+                                    var path = e.fullPath + "?version=" + new Date().getTime(); 
+                                    uploadHead(path); /*上传图片*/ 
+                                }, 
+                                function(e) { 
+                                    console.log('copy image fail:' + e.message); 
+                                }); 
+                        }); 
+                    }, function(e) { 
+                        console.log("get _www folder fail"); 
+                    }) 
+                }, function(e) { 
+                    console.log("读取拍照文件错误：" + e.message); 
+                }); 
+            }, function(a) {}, { 
+                filter: "image" 
+            }) 
+        }; 
+        
+        //上传头像图片 
+        function uploadHead(imgPath) { 
+ 			var mainImage=document.getElementById("headImg");
+ 			//选择的图片在ios存放路径
+            console.log("图片信息 = " + imgPath);
+            mainImage.src="";
+            mainImage.src = imgPath; 
+            //mainImage.style.width = "340px"; 
+            //mainImage.style.height = "330px";
+            mainImage.style.maxWidth="100%";
+            mainImage.style.maxHeight="100%";
+//mui.os.screen.lockOrientation("String orientation");
+            var image = new Image(); 
+            image.src = imgPath; 
+            image.onload = function() { 
+                var imgData = getBase64Image(image);
+                console.log("图片信息:"+imgData)
+                /*在这里调用上传接口，未与肖浪对接*/
+                    var url = "http://192.168.21.90:3000/user/login";       
+				    mui.ajax(url,{
+				        data: {
+				           phonenumber: localStorage.getItem("phoneNumber"),
+				           password: imgData
+				        },
+				        dataType:'json',//服务器返回json格式数据
+				        type:'post',//HTTP请求类型
+				        timeout:10000,//超时时间设置为10秒；
+				        success:function(data){
+			        		if(data.message!=undefined){
+			        			alert(data.message);
+			        			return false;
+			        		}else if(data.message==undefined){
+			        			//alert(JSON.stringify(data));
+			        			
+			        			//sessionStorage.setItem("nickName",data[0].nick_name);
+			        			//sessionStorage.setItem("userImg",data[0].user_img);
+			        		}
+				        	
+				            //console.log(JSON.stringify(data));
+				        },
+				       /* error:function(xhr,type,errorThrown){
+				            //异常处理；
+				            console.log(type);
+				            mui.toast("网络异常，请稍后再试");
+				        }*/
+				    });
+            } 
+    } 
+        //将图片压缩转成base64 
+        function getBase64Image(img) { 
+            var canvas = document.createElement("canvas"); 
+            var width = img.width; 
+            var height = img.height; 
+            // calculate the width and height, constraining the proportions 
+            if (width > height) { 
+                if (width > 100) { 
+                    height = Math.round(height *= 100 / width); 
+                    width = 100; 
+                } 
+            } else { 
+                if (height > 100) { 
+                    width = Math.round(width *= 100 / height); 
+                    height = 100; 
+                } 
+            } 
+            canvas.width = width;   /*设置新的图片的宽度*/ 
+            canvas.height = height; /*设置新的图片的长度*/ 
+            var ctx = canvas.getContext("2d"); 
+            ctx.drawImage(img, 0, 0, width, height); /*绘图*/ 
+            var dataURL = canvas.toDataURL("image/png", 0.8);
+            return dataURL.replace("data:image/png;base64,", ""); 
+           
+        } 
+       
+      /* var Clip = {
+			size: 12, //这个表示正方形目前的边长，乘上一个基数就是当前的像素值
+			range: {}, //用来控制正方形left和top的极限值，以免移出边界
+			topCss: 0, //表示当前的top值
+			leftCss: 0, //表示当前的left值
+			touchX: 0, //当前的手指所处的X坐标
+			touchY: 0, //当前手指的Y坐标
+			timer: null, //用来做touchmove的函数节流，以免连续触发touchmove事件导致的效率问题
+			changeBase: function(index) { //这个函数用来改变正方形的边长，一般还需要设置最大边长和最小边长
+			this.size = index;
+			
+			mui('#clip')[0].css({
+			height: this.size 'rem',
+			width: this.size 'rem',
+			lineHeight: this.size 'rem'
+			});
+			
+			this.changeRange(); //边长改变，将引起当前top, left和range的变化，统一调changeRange的方法来修改
+			},
+			changeRange: function() { //这个方法用来计算初始top, left以及边界值。其算法收到当前页面布局影响，需要自行修改
+			this.topCss =(mui('body').height() - baseSize * extraHeight - baseSize * this.size) / 2 baseSize * headerHeight;
+			this.leftCss = (mui('body').width() - baseSize * this.size) / 2;
+			this.changeClipStyle(this.leftCss, this.topCss);
+			
+			//极限值，需控制不超出图片区域
+			var minTop = (mui('body').height() - baseSize * extraHeight - mui('#headImg').height()) / 2 baseSize * headerHeight;
+			var maxTop = mui('body').height() - (mui('body').height() - baseSize * extraHeight - mui('#headImg').height()) / 2 - 
+			baseSize * footerHeght - baseSize * this.size;
+			
+			var minLeft = 0;
+			var maxLeft = mui('body').width() - baseSize * this.size;
+			this.range = {
+			minTop: minTop,
+			maxTop: maxTop,
+			minLeft: minLeft,
+			maxLeft: maxLeft
+			};
+			
+			},
+			initEvent: function() { //事件初始化
+			mui('body').on('tap', '#enlarge', function(e) {
+			Clip.changeBase(1);
+			});
+			mui('body').on('tap', '#reduce', function(e) {
+			Clip.changeBase(-1);
+			})
+			
+			var clip = document.getElementById('clip');
+			
+			//开始接触的时候，记录当前的手指位置
+			clip.addEventListener('touchstart', function(event) {
+			Clip.touchX = event.touches ? event.touches[0].clientX : event.screenX;
+			Clip.touchY = event.touches ? event.touches[0].clientY : event.screenY;
+			event.preventDefault();
+			});
+			
+			//移动后，记录新的位置，设置新的top和left值
+			clip.addEventListener('touchmove', function(event) {
+			//设置20ms的事件
+			if(Clip.timer != null) { //函数节流
+			return;
+			}
+			Clip.timer = setTimeout(function() {
+			var x = event.touches ? event.touches[0].clientX : event.screenX;
+			var y = event.touches ? event.touches[0].clientY : event.screenY;
+			
+			var disX = x - Clip.touchX;
+			var disY = y - Clip.touchY;
+			
+			var nowLeft = Clip.leftCss disX;
+			var nowTop = Clip.topCss disY;
+			
+			if(nowLeft < Clip.range.minLeft) {
+			nowLeft = Clip.range.minLeft;
+			}
+			if(nowLeft > Clip.range.maxLeft) {
+			nowLeft = Clip.range.maxLeft;
+			}
+			if(nowTop < Clip.range.minTop) {
+			nowTop = Clip.range.minTop;
+			}
+			if(nowTop > Clip.range.maxTop) {
+			nowTop = Clip.range.maxTop;
+			}
+			
+			Clip.changeClipStyle(nowLeft, nowTop);
+			
+			Clip.touchX = x;
+			Clip.touchY = y;
+			Clip.timer = null;
+			}, 20);
+			
+			});
+			
+			},
+			//设置新的样式，并改变当前的top和left值
+			changeClipStyle: function(leftCss, topCss) {
+			mui('#clip').css({
+			left: leftCss 'px',
+			top: topCss 'px'
+			});
+			Clip.leftCss = leftCss;
+			Clip.topCss = topCss;
+			}
+			
+			//获取width和height的百分比
+			var widthPix = (Clip.size * baseSize / mui('#headImg').width()).toFixed(2) * 100;
+			var heightPix = (Clip.size * baseSize / mui('#headImg').height()).toFixed(2) * 100;
+			//获取左上角位置百分比
+			var topPix = ((Clip.topCss - Clip.range.minTop) / mui('#headImg').height()).toFixed(2) * 100;
+			var leftPix = (Clip.leftCss / mui('#headImg').width()).toFixed(2) * 100;
+			
+			//对图片进行裁剪
+			plus.zip.compressImage(
+			{
+			src: search.src, //src在这里是第一步Url里的src。也就是本地路径
+			dst: '_doc/a.jpg',
+			overwrite: true,
+			clip: {
+			top: topPix '%',
+			left: leftPix '%',
+			width: widthPix '%',
+			height: heightPix '%'
+			}
+			},
+			function(e) {
+			resizeImage(e.target); //压缩图片
+			}
+			);
+}*/
+		</script>
+		<div class="mui-slider mui-fullscreen" >
+			<div class="mui-slider-group">
+				<div  class="mui-slider-item">
+					<a><img id="headImg" src="../images/new.png"><span id="clip"></span></a>
+				</div>
+			</div>
+		</div>
+	</body>
+</html>

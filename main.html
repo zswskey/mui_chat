@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html>
+
+	<head>
+		<meta charset="utf-8">
+		<meta name="viewport" content="width=device-width, initial-scale=1,maximum-scale=1,user-scalable=no">
+		<meta name="apple-mobile-web-app-capable" content="yes">
+		<meta name="apple-mobile-web-app-status-bar-style" content="black">
+
+		<link rel="stylesheet" href="css/mui.min.css">
+		<link rel="stylesheet" href="css/imgload.css">
+		<style type="text/css">
+			ul {
+				list-style-type: none;
+				margin: 0;
+				padding: 0;
+			}
+			.img_cover {
+				width: 30%;
+				margin: 2px;
+			}
+			.img_contain {
+				width: 100%;
+				background-color: #000;
+			}
+		</style>
+	</head>
+
+	<body>
+		<div class="mui-content">
+			<ul id="_ul">
+				<!--<li>
+					<br /><h5>朋友圈的图片样式:<br />等比例缩放,占满宽高,取中间显示</h5>
+					<img class="img_cover" style="background-image: url(https://img.alicdn.com/imgextra/i2/698360784/TB2Khq1dFXXXXccXXXXXXXXXXXX_!!698360784.jpg);"  src="images/translate.png"/>
+					<img class="img_cover" style="background-image: url(https://img.alicdn.com/imgextra/i4/698360784/TB21UhfdVXXXXczXXXXXXXXXXXX_!!698360784.jpg);"  src="images/translate.png"/>
+					<img class="img_cover" style="background-image: url(https://img.alicdn.com/imgextra/i3/698360784/TB2k4WOdFXXXXXVXpXXXXXXXXXX_!!698360784.jpg);"  src="images/translate.png"/>
+				</li>
+				<li>
+					<br /><h5>预览大图的图片样式:<br />等比例缩放,宽高至少占满一边,显示全部</h5>
+					<img class="img_contain" style="background-image: url(https://img.alicdn.com/imgextra/i2/698360784/TB2Khq1dFXXXXccXXXXXXXXXXXX_!!698360784.jpg);"  src="images/translate.png"/>
+					<img class="img_contain" style="background-image: url(https://img.alicdn.com/imgextra/i4/698360784/TB21UhfdVXXXXczXXXXXXXXXXXX_!!698360784.jpg);"  src="images/translate.png"/>
+					<img class="img_contain" style="background-image: url(https://img.alicdn.com/imgextra/i3/698360784/TB2k4WOdFXXXXXVXpXXXXXXXXXX_!!698360784.jpg);"  src="images/translate.png"/>
+				</li>-->
+			</ul>
+
+		</div>
+	</body>
+
+	<script src="js/mui.min.js" charset="utf-8"></script>
+	<script src="js/md5.min.js" charset="utf-8"></script>
+	<script src="js/imgload.js" charset="utf-8"></script>
+	<script type="text/javascript" charset="utf-8">
+		mui.init(); //mui初始化
+		mui.plusReady(function() {
+			//联网获取数据
+			var _ul=document.getElementById("_ul");
+			_ul.innerHTML='<h3>正在联网获取数据中...</h3>';
+			
+			setTimeout(function() {
+				var data = [
+					"https://img.alicdn.com/imgextra/i2/698360784/TB2Khq1dFXXXXccXXXXXXXXXXXX_!!698360784.jpg",
+					"https://img.alicdn.com/imgextra/i4/698360784/TB21UhfdVXXXXczXXXXXXXXXXXX_!!698360784.jpg",
+					"https://img.alicdn.com/imgextra/i3/698360784/TB2k4WOdFXXXXXVXpXXXXXXXXXX_!!698360784.jpg",
+				];
+				
+				/**
+				 * 模拟数据一,类似朋友圈的图片样式:
+				 * 图片等比例缩放,占满宽高,取中间显示
+				 */
+				var li_img_cover="";
+				for (var i = 0; i < 2; i++) {
+					li_img_cover+= '<li>'
+								+	'<h5>图片等比例缩放,占满宽高,取中间显示</h5>'
+								+	'<img class="img_cover" src="images/logo_gray.png" data-src="'+data[0]+'" onload="load(this)"/>'
+								+	'<img class="img_cover" src="images/logo_gray.png" data-src="'+data[1]+'" onload="load(this)"/>'
+								+	'<img class="img_cover" src="images/logo_gray.png" data-src="'+data[2]+'" onload="load(this)"/>'
+								+	'</li>'
+				}
+				
+				/**
+				 * 模拟数据二,类似预览大图的图片样式:
+				 * 等比例缩放,宽高至少占满一边,显示全部
+				 */
+				li_img_contain= '<li>'
+							+	'<h5>等比例缩放,宽高至少占满一边,显示全部</h5>'
+							+	'<img class="img_contain" src="images/loading.png" data-src="'+data[0]+'" onload="load(this)"/>'
+							+	'<img class="img_contain" src="images/loading.png" data-src="'+data[1]+'" onload="load(this)"/>'
+							+	'<img class="img_contain" src="images/loading.png" data-src="'+data[2]+'" onload="load(this)"/>'
+							+	'</li>'
+				
+				//加入列表
+				_ul.innerHTML=li_img_cover+li_img_contain;
+			}, 2000);
+		});
+	</script>
+
+</html>

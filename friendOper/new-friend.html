@@ -1,0 +1,360 @@
+<!DOCTYPE html>
+<html>
+
+	<head>
+		<meta charset="UTF-8">
+		<meta name="viewport" content="width=device-width,initial-scale=1,minimum-scale=1,maximum-scale=1,user-scalable=no" />
+		<title></title>
+
+		<link href="../css/mui.min.css" rel="stylesheet" />
+		<link href="../css/myapp.css" rel="stylesheet" />
+	</head>
+
+	<body>
+		<!--标题栏开始-->
+		<header id="header" class="mui-bar mui-bar-nav">
+			<a class="mui-action-back mui-icon mui-icon-left-nav mui-pull-left"></a>
+			<h1 class="mui-title">新加好友</h1>
+		</header>
+		<ul id="acceptListID" class="mui-table-view mui-table-view-chevron" style="margin-top: 44px;">
+		</ul>
+		<!--新加好友、群组结束-->
+		<script src="../js/mui.min.js"></script>
+		<script src="../js/jquery-1.9.1.js"></script>
+		<script src="../js/websqlwrapper.js"></script>
+		<script src="../js/constant.js"></script>
+		<script src="../js/Base64ConversionUtil.js"></script>
+		<script src="../js/redefineback.js"></script>
+		<script src="../js/acrosswebview.js"></script>
+
+		<script>
+			var dataBase = openDatabase("hcrchatDB", "1", "database for local caching", 20 * 1042 * 1024, function() {});
+			var emnu;
+			var menu;
+			var em;
+			var tab_invite_info = db.instance('tab_invite_info'),
+				tab_address_book = db.instance('tab_address_book'),
+				tab_chat = db.instance('tab_chat'),
+				tab_group = db.instance('tab_group');
+				tab_group_member = db.instance('tab_group_member');
+				tab_chat_group = db.instance('tab_chat_group');
+				function updateAcceptList() {
+					dataBase.transaction(function(fx) {
+						fx.executeSql(
+								"select * from tab_invite_info where invite_type=? and accept_id=? ", [0, oneself],
+								function(fx, result) {
+									var ul = document.getElementById("acceptListID");
+									ul.innerHTML = '';
+									if(result.rows.length>0){
+									for(var index = 0; index < result.rows.length; index++) {
+										var li = document.createElement("li");
+										var str = "";
+										str += "<li class='mui-table-view-cell mui-table-view-ce'><img class='mui-media-object 											mui-pull-left' src='" + result.rows.item(index)["invite_img"] + "'><div class='mui-media-body'>";
+										str += "<div  class='mui-ellipsis'>" + result.rows.item(index)["invite_id"] + "</div>";
+										str += "<p class='mui-ellipsis'>" + result.rows.item(index)["invite_nick"] + "</p>"
+										str += "</div>";
+
+										if(result.rows.item(index)["invite_status"] == 1 && result.rows.item(index)["invite_type"] == 0) {
+											str += "<span id=" + result.rows.item(index)["invite_id"] + "*" + result.rows.item(index)["invite_nick"] + "*" + result.rows.item(index)["invite_img"] + "' class='mui-btn nm-yy nm-pp'>";
+											str += "已同意";
+										} else if(result.rows.item(index)["invite_status"] == 0 && result.rows.item(index)["invite_type"] == 0) {
+											str += "<button id=" + result.rows.item(index)["invite_id"] + "*" + result.rows.item(index)["invite_nick"] + "*" + result.rows.item(index)["invite_img"] + " type='button' value='" + result.rows.item(index)["invite_id"] + "' class='mui-btn nm-yy new-r-btn'>";
+											str += "同意";
+										}
+										str += "</button>";
+										li.innerHTML = str;
+										ul.appendChild(li);
+									}
+									}
+									if(mui("#acceptListID")[0].getElementsByTagName("li").length > 0) {
+										mui('.mui-table-view-ce').on('tap', 'button', function() {
+											if(plus.networkinfo.getCurrentType() == 0 || plus.networkinfo.getCurrentType() == 1) {
+												var w = plus.nativeUI.showWaiting("加载中...");
+												setTimeout(function() {
+													w.close();
+												}, 2000)
+												mui.toast("网络异常");
+											}
+											menu = this;
+											var w = plus.nativeUI.showWaiting("加载中...");
+											var arrs = this.getAttribute("id").split("*");
+											var sub = plus.webview.getWebviewById('tab-webview-subpage-chat.html');
+											/*console.log("点击同意时，路径还是图片" + localStorage.getItem("userImg"));
+											var tohead;
+											if(mui.os.ios) {
+												var oneselfHead = new Date().getTime();
+												ImagedataURL(oneselfHead, localStorage.getItem("userImg"), 0, function(newPath) {
+													setTimeout(function() {
+														Base64ConversionUtil.startFileToData(newPath, function(base64Str) {
+															tohead = base64Str;
+														});
+													}, 80);
+												});
+											} else {
+												var oneselfHead = new Date().getTime();
+												ImagedataURL(oneselfHead, localStorage.getItem("userImg"), 0, function(newPath) {
+													setTimeout(function() {
+														Base64ConversionUtil.startFileToData(newPath, function(base64Str) {
+															tohead = base64Str;
+														});
+													}, 80);
+												});
+											}*/
+											var data = {
+												to: localStorage.getItem("phoneNumber"), //接收人手机号,
+												user: arrs[0], //发起人手机号,
+												invite_nick: arrs[1],
+												invite_img: arrs[2],
+												tohead: "", //接收人头像，(可以为空)
+												tonick: localStorage.getItem("nickName"), //接收人昵称，(可以为空)后期变成动态
+												type: 4 //4:接受为好友/5:不接受（拒绝）
+											};
+											VG.method(sub, "socketSendInterface", {
+												sendName: "addFriendResult",
+												data: data
+											}, function(e) {
+												if(e == 0) { //0 超時，1，成功2，失敗
+													mui.toast("连接超时");
+													w.close();
+												} else if(e == 1) {
+													console.log("發送成功");
+													w.close();
+												} else {
+													mui.toast("网络异常");
+													w.close();
+												}
+											});
+
+										})
+									}
+								}
+							)
+							//群邀请读库操作
+						fx.executeSql(
+							"select * from tab_invite_info where invite_type=? and accept_id=? order by time_id", [1, oneself],
+							function(fx, result) {
+								for(var index = 0; index < result.rows.length; index++) {
+								var ul = document.getElementById("acceptListID");
+									var li = document.createElement("li");
+									var str = "";
+									str += "<li class='mui-table-view-cell mui-table-view-cel'><img class='mui-media-object mui-pull-left' src='../images/group-head.jpg'><div class='mui-media-body'>";
+									str += "<div class='mui-ellipsis'>" + result.rows.item(index)["group_name"] + "</div>";
+									str += "<p id='inviteID' class='mui-ellipsis'>" + result.rows.item(index)["invite_nick"] + " " + "邀请</p>"
+									str += "</div>";
+
+									if(result.rows.item(index)["invite_status"] == 1 && result.rows.item(index)["invite_type"] == 1) {
+										str += "<span id='" + result.rows.item(index)["group_id"] + "' class='mui-btn nm-yy nm-pp'>";
+										str += "已同意";
+									} else if(result.rows.item(index)["invite_status"] == 0 && result.rows.item(index)["invite_type"] == 1) {
+										str += "<button id='" + result.rows.item(index)["group_id"] + "' type='button' class='mui-btn nm-yy new-r-btn'>";
+										str += "同意";
+									}
+									li.innerHTML = str;
+									ul.appendChild(li);
+								}
+								if(mui("#acceptListID")[0].getElementsByTagName("li").length > 0) {
+									mui('.mui-table-view-cel').on('tap', 'button', function() {
+										if(plus.networkinfo.getCurrentType() == 0 || plus.networkinfo.getCurrentType() == 1) {
+											var w = plus.nativeUI.showWaiting("加载中...");
+											setTimeout(function() {
+												w.close();
+											}, 2000)
+											mui.toast("网络异常");
+										}
+										em = this;
+										var w = plus.nativeUI.showWaiting("加载中...");
+
+										var sub = plus.webview.getWebviewById('tab-webview-subpage-chat.html');
+										var data = {
+											acceptId: oneself, //被邀请人ID
+											username: localStorage.getItem("nickName"), //被邀请人昵称
+											img: "", //被邀请人头像
+											groupId: this.getAttribute("id"), //群ID
+											type: 8 //8:接受进群/9:不接受（拒绝）
+										};
+										VG.method(sub, "socketSendInterface", {
+											sendName: "addGroupAgree",
+											data: data
+										}, function(e) {
+											if(e == 0) { //0 超時，1，成功2，失敗
+												w.close();
+												mui.toast("连接超时");
+											} else if(e == 1) {
+												w.close();
+											} else {
+												w.close();
+												mui.toast("网络异常");
+											}
+										});
+
+									})
+								}
+							}
+						)
+					})
+				}
+				mui.plusReady(function() {
+					window.addEventListener('addFriend', function(event) {
+						var data = event.detail.data;
+						if(data.type == 3) {
+							dataBase.transaction(function(fx) {
+								tab_invite_info.save({
+									id: data.to + "" + data.user,
+									time_id: new Date().getTime(),
+									invite_id: data.user,
+									accept_id: data.to,
+									group_id: null,
+									group_name: null,
+									invite_status: 0,
+									invite_type: 0,
+									invite_nick: data.reqnick,
+									invite_img: data.reqhead
+								}, 'id', function() {
+									var ssid = plus.webview.currentWebview("new-friend.html");
+									ssid.evalJS("updateAcceptList();");
+								});
+							})
+						}
+					});
+
+					//由代理转发过来的好友应答
+					window.addEventListener('addFriendResult', function(event) {
+						var data = event.detail.data;
+						console.log("shuku"+JSON.stringify(data));
+							tab_invite_info.update({
+								id: data.to + "" + data.user,
+								accept_id: data.to,
+								invite_id: data.user,
+								invite_type: 0,
+								invite_status: 1
+							}, 'id');
+							tab_address_book.save({
+								id: data.to + "" + data.user,
+								user_id: data.to,
+								friend_id: data.user,
+								friend_nickname: data.invite_nick,
+								friend_remark: data.invite_nick,
+								friend_img: data.invite_img,
+								del_status: 0
+							}, 'id', function() {
+								var wobj = plus.webview.getWebviewById("tab-webview-subpage-contact.html");
+								wobj.evalJS("updateDatabase();");
+							})
+							var sessionid = data.to + "" + data.user;
+							tab_chat.save({
+								id: new Date().getTime(),
+								send_id: data.user,
+								receive_id: data.to,
+								message: '我们已经是好友了，开始聊天吧！！',
+								message_type: '2',
+								session_id: data.to + "" + data.user,
+								send_state: '1'
+							}, 'session_id', function() {
+								setTimeout(function() {
+									var wvs=plus.webview.getWebviewById('tab-webview-subpage-chat.html');
+   									wvs.evalJS("pulldownRefresh();");
+									var nowChatNum = localStorage.getItem(sessionid) ? parseInt(localStorage.getItem(sessionid)) + 1 : 1;
+									localStorage.setItem(sessionid, nowChatNum);
+								}, 1000);
+							});
+							menu.innerHTML = "已同意";
+							$(menu).attr("disabled", "true");
+					})
+
+					//及时推送群邀请
+					window.addEventListener('addGroupFriends', function(event) {
+						var data = event.detail.data;
+						if(data.to == oneself) {
+							if(data.type == 6) {
+								tab_invite_info.save({
+									id: data.to + "" + data.groupid,
+									time_id: new Date().getTime(),
+									invite_id: data.user,
+									accept_id: data.to,
+									group_id: data.groupid,
+									group_name: data.groupname,
+									invite_status: 0,
+									invite_type: 1,
+									invite_nick: null,
+									invite_img: null
+								}, 'id', function() {
+									var ssid = plus.webview.currentWebview("new-friend.html");
+									ssid.evalJS("updateAcceptList();");
+								});
+							} else {
+								tab_invite_info.save({
+									id: data.to + "" + data.groupid,
+									time_id: new Date().getTime(),
+									invite_id: data.user,
+									accept_id: data.to,
+									group_id: data.groupid,
+									group_name: data.groupname,
+									invite_status: 0,
+									invite_type: 1,
+									invite_nick: null,
+									invite_img: null
+								}, 'id', function() {
+									var ssid = plus.webview.currentWebview("new-friend.html");
+									ssid.evalJS("updateAcceptList();");
+								});
+							}
+						}
+
+					})
+
+				})
+
+			//群应答操作
+			window.addEventListener('addGroupByAcceptId', function(event) {
+				var data = event.detail.data;
+				if(data.type == 8 && data.result == 'success') {
+					dataBase.transaction(function(fx) {
+						tab_invite_info.update({
+							id: oneself + "" + data.groupId,
+							invite_status: 1,
+							invite_type: 1
+						}, 'id');
+						tab_group.save({
+							group_id: data.group.group_id,
+							group_name: data.group.group_name,
+							group_comment: data.group.group_comment,
+							manager: data.group.manager_id
+						}, 'group_id');
+						for(var i in data.results) {
+							tab_group_member.save({
+								id: data.results[i].account + "" + data.results[i].group_id,
+								user_id: data.results[i].account,
+								group_user_name: data.results[i].group_user_name,
+								group_id: data.results[i].group_id,
+								user_img: data.results[i].img
+							}, 'id');
+						}
+						var sessionid = oneself + "" + data.group.group_id;
+						tab_chat_group.save({
+							id: new Date().getTime(),
+							send_id: '1',
+							receive_id: oneself,
+							message: '欢迎入群，开始聊天吧！',
+							message_type: '2',
+							group_id: data.group.group_id,
+							session_id: oneself + "" + data.group.group_id,
+							send_state: '1'
+						}, 'session_id', function() {
+							setTimeout(function() {
+								var wvs=plus.webview.getWebviewById('tab-webview-subpage-chat.html');
+   wvs.evalJS("pulldownRefresh();");
+								var nowChatNum = localStorage.getItem(sessionid) ? parseInt(localStorage.getItem(sessionid)) + 1 : 1;
+								localStorage.setItem(sessionid, nowChatNum);
+							}, 1000);
+						});
+						em.innerHTML = "已同意";
+						$(em).attr("disabled", "true");
+					})
+				}
+			})
+			
+			updateAcceptList();
+		</script>
+	</body>
+
+</html>

@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html>
+
+	<head>
+		<meta charset="UTF-8">
+		<meta name="viewport" content="width=device-width,initial-scale=1,minimum-scale=1,maximum-scale=1,user-scalable=no" />
+		<title></title>
+		
+		<link href="../css/mui.min.css" rel="stylesheet" />
+		<link href="../css/myapp.css" rel="stylesheet" />
+	</head>
+
+	<body>
+		<!--标题栏开始-->
+		<header id="header" class="mui-bar mui-bar-nav">
+			<a class="mui-action-back mui-icon mui-icon-left-nav mui-pull-left"></a>
+			<h1 class="mui-title">名字</h1>
+		</header>
+		<!--标题栏结束-->
+
+		<!--搜索框开始-->
+		<div class="mui-pages" style="margin-top: 54px; padding: 0 15px;">
+			<div id="feedback" class="mui-page feedback mui-page-center" style="">
+
+				<div class="mui-page-content">
+					<p>昵称</p>
+					<div class="mui-input-row">
+						<input id="nickID" type="text" maxlength="50" class="mui-input-clear  contact" placeholder="" data-input-clear="19"><span class="mui-icon mui-icon-clear mui-hidden" ></span>
+					</div>
+					<div class="b-btn">
+						<button id="saveNickID" type="button" class="mui-btn new-r-btn add-contact" style="width: 100%; margin: 0;">完成</button>
+					</div>
+				</div>
+			</div>
+		</div>
+		<!--搜索框结束-->
+	<script src="../js/mui.min.js"></script>
+	<script src="../js/jquery-1.9.1.js"></script>
+	<script src="../js/constant.js"></script>
+	<script src="../js/isNetwork.js"></script>
+	<script>
+	window.onload=function(){
+		mui("#nickID")[0].value=localStorage.getItem("nickName");
+		document.getElementById("saveNickID").addEventListener('tap',function(){
+			if(plus.networkinfo.getCurrentType() == 0 || plus.networkinfo.getCurrentType() == 1) {				
+				var w = plus.nativeUI.showWaiting("加载中...");
+				setTimeout(function(){
+					w.close();
+				},2000)
+				mui.toast("网络异常");
+			}else{
+				var wo = plus.nativeUI.showWaiting("加载中...");
+				    mui.ajax(Url+"/user/update",{
+				        data: {
+				           "account":localStorage.getItem("phoneNumber"),
+				           "userName":mui("#nickID")[0].value
+				        },
+				        dataType:'json',//服务器返回json格式数据
+				        type:'post',//HTTP请求类型
+				        timeout:2000,//超时时间设置为10秒；
+				        success:function(data){
+			        		if(data){
+								wo.close();
+			        			localStorage.setItem("nickName",mui("#nickID")[0].value);
+			        			var wobj = plus.webview.getWebviewById("tab-webview-subpage-setting.html");
+			        			var w = plus.webview.getWebviewById("tab-webview-subpage-contact.html");
+								mui.fire(wobj,'updataNick',{nick:mui("#nickID")[0].value});
+								w.evalJS("updateDatabase();");
+			        			mui.toast("昵称修改成功");
+			        		}else{
+			        			mui.toast("昵称修改失败");
+			        		}
+				        	
+				            //console.log(JSON.stringify(data));
+				        },
+				        error:function(xhr,type,errorThrown){
+				            //异常处理；
+				           var wt = plus.nativeUI.showWaiting("加载中...");
+						   setTimeout(function(){
+								wt.close();
+							},2000)
+							mui.toast("网络异常");
+				        }
+				    })
+			}
+			
+		})
+		}
+	</script>
+	</body>
+
+</html>

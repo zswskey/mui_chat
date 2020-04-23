@@ -1,0 +1,128 @@
+/*=======登录页=======*/
+.logo-div{text-align: center;height:100px;margin:20% 0 10% 0;}
+.loginbg{background: #7fbcfb;}
+.mui-content-logindiv,.login-form{background:none;}
+
+.login-form .mui-icon{ color: #fff;font-size: 28px;}
+.login-form{width: 70%;margin: 0 auto;}
+.login-form:before,.login-form:after{height:0;}
+.mui-content-login{width: 70%;margin:20px auto;}
+.login-form .mui-hidden{ color: #fff;}
+.mui-input-row-login label{width:auto;padding:6px 15px 6px 0;}
+.mui-input-row-login .mui-input-clear~.mui-icon-clear, .mui-input-row-login .mui-input-password~.mui-icon-eye, .mui-input-row-login .mui-input-speech~.mui-icon-speech{color:#c5e2ff;top:14px;}
+.mui-input-row-login label~input, .mui-input-row-login label~select, .mui-input-row-login label~textarea{float: left;width: 70%;color: #fff;}
+.login-form .mui-input-row-login:after{left:-15px; background-color: #fff;}
+
+.link-area{text-align: center;margin-top: 20px; font-size: 16px; color: #fff;}
+.link-area a{color: #deefff; padding: 0 10px;}
+.link-area a:hover{color: #fff;}
+.mui-content-login .mui-btn-login{background:none;border:1px solid #cde5ff;}
+
+
+/*===标题栏添加===*/
+.mui-bar-nav .mui-icon-plusempty{color: #fff;font-size: 34px;padding-top: 5px;}
+/*.mui-plus header.mui-bar {
+				display: none!important;
+			}
+			.mui-plus .mui-bar-nav~.mui-content {
+				padding: 0!important;
+			}*/
+			
+			.mui-plus .plus{
+				display: inline;
+			}
+			
+			.plus{
+				display: none;
+			}
+			
+			#topPopover {
+				position: fixed;
+				top: 16px;
+				right: 6px;
+			}
+			#topPopover .mui-popover-arrow {
+				left: auto;
+				right: 6px;
+			}
+			.mui-popover {
+				height: auto;
+			}
+			.mui-popover .mui-scroll-wrapper-v {
+				height: 106px;
+				margin: 0px;
+			}
+			.mui-content {
+				padding: 10px;
+			}
+			
+.mui-popover{width:180px;}
+.add-icon{font-size: 17px;}
+.mui-icon-personadd:before{font-size: 28px;margin-left: -5px;margin-right: 10px;color: #fca454;}
+
+/*===聊天列表===*/
+.time-li{position: relative;}
+.time-li .time-li-span{font-size: 14px;color: #8f8f94;position: absolute;right: 15px;}
+.tx-point-div{position: relative;float: left;}
+.tx-point-div .mui-badge{position: absolute;right:4px;top:-5px;background: red;color: #fff;}
+.mui-icon .remind-span{width: 8px;height: 8px;padding: 0;}
+
+/*===通讯录===*/
+.center-name{line-height: 42px;}
+.mui-badge-blue, .mui-badge-primary{background: red;}
+
+/*===新加好友同意列表===*/
+.new-r-btn{border:1px solid #0B8DCB;background: #0B8DCB;color: #fff;}
+.nm-pp{background-color:#9ecee4;border:0px;color: #dbecf4;}
+.nm-yy{width:75px;}
+.name-span span{color: #0B8DCB;}
+.b-btn{margin-top: 15px; text-align: center;}
+.b-btn button{width: 40%;margin: 0 10px;padding: 10px 0;}
+.mui-table-view .mui-table-view-cell .mui-pull-right{color: #999;}
+.mui-table-view .mui-table-view-cel .mui-pull-right{color: #999;}
+.mui-content-padded .btn-quit{border:1px solid #0B8DCB;background: ;color: #fff;}
+
+/*==添加通讯录按钮==*/
+.add-btn-div{padding: 0 15px; margin-bottom: 20px;}
+.add-btn-div .add-contact{ width: 100%; margin: 0;}
+
+
+
+/*===底部菜单===*/
+.mui-bar-nav-b{background-color: #fff;}
+
+/*==群信息页面==*/
+.mui-grid-view.qunliao-ul{border: none; background-color: #fff;}
+.mui-table-view.mui-grid-view .ql-tx-li{border: none;width: 25%;float: left;}
+.mui-table-view.mui-grid-view .ql-tx-li .ql-tx-a{display: block;height:66px;text-align: center;position: relative;}
+.mui-table-view.mui-grid-view .ql-tx-li .ql-tx-a .ql-tx-a-img{margin:0;padding:0;position: absolute;margin-left: -29px;}
+.mui-table-view.mui-grid-view .ql-tx-li .ql-tx-a .mui-icon{color:#d0d0d0;font-size: 2.8em;}
+.mui-table-view.mui-grid-view .ql-tx-li .mui-media-body{margin-top: 0px;color: #888;}
+
+.ql-icon-r{padding-right:20px;}
+.ql-li:after{left:15px;right:15px;}
+.delete-btn{ background-color: #CF2D28; border: 1px solid #CF2D28;}
+
+/*==头像大图显示==*/
+.mui-fullscreen {position: fixed;background-color:rgba(0,0,0,0.6);}
+
+
+/*===建群复选框===*/
+.jq-checkbox.mui-checkbox input[type=checkbox]{top:17px;}
+.jq-checkbox.mui-checkbox input[type=checkbox]:checked:before{color: #0B8DCB;}
+
+/*===新加icon===*/
+@font-face {font-family: "iconfont-lost"; 
+  src:url('../fonts/iconfont.ttf') format('truetype')
+}
+.iconfont-lost{
+  font-family:"iconfont-lost" !important;
+  font-style:normal;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+.icon-jiaqun:before { content: "\e601";font-size: 22px;margin-right: 10px;color: #93bd3c;}/*==建群icon==*/
+.icon-qunliao:before { content: "\e600"; }/*==群聊icon==*/
+.icon-shibai:before { content: "\e603"; font-size:18px;color:#DD524D; }/*==失败icon==*/
+
+.mui-table-view .name-pic{max-width:58px;height:58px;margin-right: 15px;}

@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html>
+
+	<head>
+		<meta charset="UTF-8">
+		<meta name="viewport" content="width=device-width,initial-scale=1,minimum-scale=1,maximum-scale=1,user-scalable=no" />
+		<title></title>
+
+		<link href="../css/mui.min.css" rel="stylesheet" />
+		<link href="../css/myapp.css" rel="stylesheet" />
+	</head>
+
+	<body>
+		<!--标题栏开始-->
+		<header id="header" class="mui-bar mui-bar-nav">
+			<a class="mui-action-back mui-icon mui-icon-left-nav mui-pull-left"></a>
+			<h1 class="mui-title">添加好友</h1>
+		</header>
+		<!--标题栏结束-->
+
+		<!--新加好友、群组开始-->
+		<ul id="tupianID" class="mui-table-view mui-table-view-chevron" style="margin-top: 44px;">
+			<li id="tupianID" class="mui-table-view-cell">
+				<img id="srcID" class="mui-media-object mui-pull-left name-pic" src="">
+				<div class="mui-media-body">
+					<div id="friendRemarkID" class="mui-ellipsis" style="display: none;"></div>
+					<p id="searchNumber" class="mui-ellipsis"></p>
+					<p id="nickNameID" class="mui-ellipsis"></p>
+				</div>
+			</li>
+		</ul>
+
+		<ul class="mui-table-view" style="margin-top: 15px;">
+			<li class="mui-table-view-cell">
+				<a id="friendRemark" class="mui-navigate-right">设置备注和描述</a>
+			</li>
+		</ul>
+
+		<ul class="mui-table-view" style="margin-top: 15px;">
+			<li class="mui-table-view-cell">
+				<a>地区<span class="mui-pull-right">北京&nbsp;&nbsp;朝阳区</span></a>
+			</li>
+		</ul>
+		<div class="b-btn add-btn-div">
+			<button id="addListID" type="button" class="mui-btn new-r-btn add-contact">添加通讯录</button><br />
+			<button id="sendMessageID" type="button" class="mui-btn new-r-btn add-contact">发消息</button><br />
+			<button id="delID" type="button" class="add-contact" style="display: none;">删除好友</button>
+		</div>
+		<script src="../js/mui.min.js"></script>
+		<script src="../js/jquery-1.9.1.js"></script>
+		<script src="../js/websqlwrapper.js"></script>
+		<script src="../js/constant.js"></script>
+		<script src="../js/acrosswebview.js"></script>
+		<script>
+			var shade ;
+			var tab_address_book = db.instance('tab_address_book'),
+			    tab_chat = db.instance(' tab_chat'),
+			    tab_invite_info = db.instance('tab_invite_info');
+			var dataBase = openDatabase("hcrchatDB", "1", "database for local caching", 20 * 1042 * 1024, function() {});
+				var userNow = localStorage.getItem("phoneNumber");
+				mui.plusReady(function() {
+					var self = plus.webview.currentWebview();
+					console.log(self.friendOper);
+					if(self.friendOper == 0) {
+						dataBase.transaction(function(fx) {
+							fx.executeSql(
+								"select * from tab_address_book where friend_id=?", [self.friend_id],
+								function(fx, result) {
+									for(var i = 0; i < result.rows.length; i++) {
+										$("#searchNumber").html(result.rows.item(i)["friend_id"]);
+										$("#nickNameID").html(result.rows.item(i)["friend_nickname"]);
+										$("#friendRemarkID").html(result.rows.item(i)["friend_remark"]);
+										$("#srcID").attr("src",result.rows.item(i)["friend_img"]);
+									}
+								});
+						})
+						$("#sendMessageID").show();
+						$("#friendRemarkID").show();
+						$("#delID").show();
+						$("#addListID").hide();
+						document.getElementById("delID").addEventListener('tap', function() {
+							shade = plus.nativeUI.showWaiting("加载中...");
+							var sub=plus.webview.getWebviewById('tab-webview-subpage-chat.html');
+							var data = {
+								to: self.friend_id, //接收人手机号,
+								user: userNow, //发起人手机号,
+								type: 10 // 10:删除好友
+								};
+								VG.method(sub, "socketSendInterface", {sendName: "deleteFriend",data: data},function(e){
+					                if(e == 0){//0 超時，1，成功2，失敗
+					                	shade.close();
+					                	mui.toast("连接超时");
+					                }else if(e == 1){
+										shade.close();
+					                	mui.toast("删除好友成功");
+					                }else{
+					                	shade.close();
+					                	mui.toast("网络异常");
+					                }
+					            });
+						});
+						//与对方聊天
+						document.getElementById("sendMessageID").addEventListener('tap', function() {
+							var sessionid = oneself+""+self.friend_id;
+								mui.openWindow({
+									url: "../examples/im-chat.html",
+									id: sessionid,
+									extras: {
+										title: $("#friendRemarkID").html(),
+										userid: self.friend_id
+									},
+									createNew: true
+								})
+							})
+						//修改好友备注
+						document.getElementById("friendRemark").addEventListener('tap', function() {
+							mui.openWindow({
+								url: "/friendOper/friend-beizhu.html",
+								id: "friend-beizhu.html",
+								extras: {
+									title: mui("#friendRemarkID")[0].innerHTML,
+									friendId: self.friend_id,
+									userId: userNow
+								},
+								createNew: true
+							})
+						})
+
+					} else {
+						$("#searchNumber").html(self.account);
+						$("#friendRemark").html(self.nickName);
+						$("#nickNameID").html(self.nickName);
+						$("#srcID").attr("src",self.img);
+						$("#addListID").html("添加通讯录");
+						$("#sendMessageID").hide();
+						document.getElementById("addListID").addEventListener('tap', function() {
+							console.log("正常");
+							if(plus.networkinfo.getCurrentType() == 0 || plus.networkinfo.getCurrentType() == 1) {
+								shade = plus.nativeUI.showWaiting("加载中...");
+								setTimeout(function(){
+									shade.close();
+								},2000);
+								mui.toast("网络异常");
+							}else{
+								shade = plus.nativeUI.showWaiting("加载中...");
+								var sub=plus.webview.getWebviewById('tab-webview-subpage-chat.html');
+								var data = {
+									reqhead: "",
+									reqnick: localStorage.getItem("nickName"),
+									user: oneself,
+									to: self.account,
+									type: 3
+								};
+								VG.method(sub, "socketSendInterface", {sendName: 'addFriend',data: data},function(e){
+					                if(e == 0){//0 超時，1，成功2，失敗
+					                	shade.close();
+					                	mui.toast("连接超时");
+					                }else if(e == 1){
+										shade.close();
+					                	mui.toast("好友添加信息已发送成功，请耐心等待...");
+										$('#addListID').html("已邀请好友");
+										$('#addListID').attr('disabled',"true");//添加disabled属性
+					                }else{
+					                	shade.close();
+					                	mui.toast("网络异常");
+					                }
+					            });
+							}
+							
+						});
+						//代表对方已点同意接受好友
+						window.addEventListener('addFriendResult', function(event) {
+						var data = event.detail.data;
+							dataBase.transaction(function(fx) {
+								tab_address_book.save({
+									id:data.user + data.to,
+									user_id:data.user,
+									friend_id:data.to,
+									friend_nickname:data.tonick,
+									friend_remark:data.tonick,
+									friend_img:data.tohead,
+									del_status:0
+								},'id',function(){
+									var wvs = plus.webview.getWebviewById('tab-webview-subpage-contact.html');
+									 wvs.evalJS("updateDatabase();");
+								});
+								var sessionid=data.user + data.to;
+								tab_chat.save({
+									id: new Date().getTime(),
+									send_id: data.to,
+									receive_id: data.user,
+									message: '我们已经是好友了，开始聊天吧！',
+									message_type: '2',
+									session_id: data.user + data.to,
+									send_state: '1'
+								}, 'session_id', function() {
+									setTimeout(function() {
+										var wvs=plus.webview.getWebviewById('tab-webview-subpage-chat.html');
+   										wvs.evalJS("pulldownRefresh();");
+										var nowChatNum = localStorage.getItem(sessionid)?parseInt(localStorage.getItem(sessionid))+1:1;
+										localStorage.setItem(sessionid,nowChatNum);
+									}, 100);
+								});
+								$("#sendMessageID").show();
+								$("#addListID").hide();
+							})
+								document.getElementById("sendMessageID").addEventListener('tap', function() {
+									var sessionid = oneself+""+data.to;
+									mui.init({
+										subpages: [{
+											id: sessionid,
+											url: "../examples/im-chat.html",
+											extras: {
+												title: mui("#friendRemarkID")[0].innerHTML,
+												userid: data.to
+											},
+											createNew: false
+										}]
+									})
+								})
+
+							if(data.result == "success") {} else {
+							}
+						})
+					}
+
+				});
+				//删除好友消息接收	
+				window.addEventListener('deleteFriend', function(event) {
+						var data = event.detail.data;
+						console.log("接收转发过来的消息删除"+JSON.stringify(data));
+					var type = data.type,
+						userid;
+					if(type == 10) {
+						if(oneself == data.user) { //判断是否为当前用户
+							userid = data.user + "" + data.to;
+							tab_invite_info.del('id === "'+userid+'"');
+							//})
+							tab_address_book.del('id === "' + userid + '"');
+							tab_chat.del('session_id === "' + userid + '"', function(r) {
+								var wvs = plus.webview.getWebviewById('tab-webview-subpage-contact.html');
+								wvs.evalJS("updateDatabase();");
+								setTimeout(function(){
+							 		var w = plus.webview.getWebviewById('tab-webview-main.html');
+						   	 			mui.fire(w,'updatechatlist');
+						   	 			plus.webview.show(w);
+								mui.toast("聊天记录清除成功");
+						   	 	},1000);
+							});
+						} else {
+							userid = data.to + "" + data.user;
+							tab_address_book.update({
+								id: userid,
+								del_status: 1
+							}, 'id');
+							tab_chat.del('session_id === "' + userid + '"');
+						}
+					}
+				});
+			
+					//自定义事件，用来改变好友备注信息
+					document.addEventListener('updataRemark', function(event) {
+						//获取参数
+						var friendRemark = event.detail.friendRemark;
+						$("#friendRemarkID").html(friendRemark);
+					});
+		</script>
+		<!--新加好友、群组结束-->
+
+	</body>
+
+</html>
